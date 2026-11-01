@@ -57,11 +57,12 @@ if (!file.exists(arq_rds)) {
     dn_bruto <- readRDS(arq_rds)
 }
 
-## Data de extração: orientações exigem informar. O horário de modificação do
-## arquivo local costuma ser o dia do download. CONFIRME e, se preciso, digite
-## a data manualmente (ex.: as.Date("2026-10-31")).
-data_extracao <- as.Date(file.info(arq_dbc)$mtime)
-data_extracao
+## Data de extração: é a data informada PELO SITE do DATASUS ("Dados de 2026 -
+## 2a prévia - data de extração 01/09/2026"), e não a data em que baixamos o
+## arquivo. As duas são diferentes e as duas são úteis para o relatório.
+data_extracao <- as.Date("2026-09-01")                  # informada pelo DATASUS
+data_download <- as.Date(file.info(arq_dbc)$mtime)      # quando eu baixei
+c(extracao_datasus = as.character(data_extracao), download = as.character(data_download))
 
 dim(dn_bruto)          # linhas (nascimentos) x colunas (variáveis)
 names(dn_bruto)
@@ -209,6 +210,12 @@ c(n_peso_ignorado = n_peso_ign, pct = round(pct_peso_ign, 3))
 ## Município ignorado (separado, conforme orientações)
 c(n_municipio_ignorado = nrow(d2) - nrow(d3))
 
+## O arquivo é organizado por RESIDÊNCIA ou por OCORRÊNCIA? (D2)
+## Na execução, 100% das mães residem em SC (nenhum registro perdido no filtro 2).
+## Se o arquivo fosse por ocorrência, haveria mães de outras UFs. Conferimos o
+## inverso: existem nascimentos de mães de SC ocorridos FORA de SC?
+table(nasceu_em_SC = substr(dn_bruto$codmunnasc, 1, 2) == UF_PREFIXO, useNA = "ifany")
+
 ## --- Período EFETIVAMENTE coberto pelo arquivo (D3) --------------------------
 periodo <- c(primeiro_nasc = as.character(min(d2$dtnasc)),
              ultimo_nasc   = as.character(max(d2$dtnasc)),
@@ -218,6 +225,36 @@ periodo
 ## Nascimentos por mês: os últimos meses costumam estar INCOMPLETOS por atraso
 ## de notificação. Anote isso nas limitações.
 table(format(d2$dtnasc, "%Y-%m"))
+
+## --- Agosto está incompleto? (D3b) -------------------------------------------
+## Na execução, agosto teve ~5.100 nascimentos contra ~8.500 nos outros meses.
+## Quatro verificações para decidir como tratar o mês:
+
+## (i) nascimentos por dia de agosto: queda concentrada nos últimos dias?
+table(format(d2$dtnasc[format(d2$dtnasc, "%m") == "08"], "%d"))
+
+## (ii) a taxa de baixo peso de agosto é parecida com a de jan-jul?
+d4_per <- d4 %>%
+    mutate(periodo = ifelse(format(dtnasc, "%m") == "08", "Agosto", "Jan-Jul"))
+tab_per <- table(d4_per$periodo, d4_per$baixo_peso)
+tab_per
+round(100 * prop.table(tab_per, 1), 2)
+prop.test(x = tab_per[, "TRUE"], n = rowSums(tab_per))   # H0: mesma taxa nos dois períodos
+
+## (iii) os preditores mudam de perfil em agosto?
+d4_per %>%
+    group_by(periodo) %>%
+    summarise(across(c(adolescente, esc_baixa, prenatal_insuf, gestacao_mult, mae_35mais),
+                     ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+
+## (iv) quantos municípios têm sua composição alterada de forma relevante?
+##      (compara n por município com e sem agosto)
+n_com_ago  <- d4 %>% count(codmunres, name = "n_com")
+n_sem_ago  <- d4_per %>% filter(periodo == "Jan-Jul") %>% count(codmunres, name = "n_sem")
+comp <- full_join(n_com_ago, n_sem_ago, by = "codmunres") %>%
+    mutate(n_sem = coalesce(n_sem, 0L))
+sum(comp$n_sem == 0)      # municípios que ficariam SEM nascimento se agosto saísse
+summary(comp$n_sem / comp$n_com)
 
 
 ################################################################################
@@ -233,17 +270,6 @@ mun_oficial <- tryCatch({
     tibble(cod6 = substr(as.character(mm$code_muni), 1, 6),   # SINASC usa 6 dígitos
            nome = mm$name_muni)
 }, error = function(e) NULL)
-
-## Plano B: se o geobr falhar (sem internet), baixe a lista do IBGE e salve em
-## data/raw/municipios_sc_ibge.csv com as colunas cod6 (6 dígitos) e nome.
-if (is.null(mun_oficial) && file.exists("data/raw/municipios_sc_ibge.csv")) {
-    mun_oficial <- read.csv("data/raw/municipios_sc_ibge.csv",
-                            colClasses = "character", fileEncoding = "UTF-8") %>% as_tibble()
-}
-if (is.null(mun_oficial)) {
-    stop("Sem lista oficial de municípios. Instale/rode o geobr com internet ",
-         "ou crie data/raw/municipios_sc_ibge.csv (cod6, nome).")
-}
 
 nrow(mun_oficial)   # esperado: 295 municípios em SC
 
@@ -341,6 +367,15 @@ colSums(is.na(base_modelo[prop_cols]))
 
 ## Taxa global de baixo peso: no Brasil costuma ficar em torno de 8-9%.
 ## Valor muito distante disso => provável erro de filtro ou de definição.
+## --- Extremos de peso (D4/D5): pesos muito baixos podem ser erro de digitação,
+## mas NÃO mudam a classificação (qualquer valor < 2500 g já é baixo peso).
+sort(d4$peso_num)[1:10]
+sum(d4$peso_num < 500)
+sum(d4$peso_num > 5500)
+
+## --- Cauda de consprenat (D9/D10): além de 99 (= ignorado), há valores absurdos?
+table(dn$cons_num[!is.na(dn$cons_num) & dn$cons_num > 30])
+
 taxa_global <- sum(base_modelo$baixo_peso) / sum(base_modelo$n_nascidos)
 round(100 * taxa_global, 2)
 
@@ -377,6 +412,8 @@ write.csv(sem_nascimento, "output/tabelas/municipios_sem_nascimento.csv", row.na
 metadados <- list(
     arquivo_fonte        = arq_dbc,
     data_extracao        = data_extracao,
+    data_download        = data_download,
+    versao_dados         = "SINASC 2026 - 2a previa (DATASUS)",
     periodo_coberto      = periodo,
     n_linhas_duplicadas  = n_linhas_duplicadas,
     n_contador_repetido  = n_contador_repetido,

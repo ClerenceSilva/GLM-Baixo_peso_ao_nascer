@@ -2,11 +2,11 @@
 
 **Trabalho final CE314 (MLG) · Tema 8 · Baixo peso ao nascer em Santa Catarina (SINASC, 2026)**
 Script correspondente: `scripts/01_preparacao_base.R`
+Status: **executada**. Os resultados reais estão na Seção 5; os alertas, na Seção 6.
 
-> Como usar este documento: ele tem (1) o raciocínio geral, (2) cada decisão numerada (D1…D14) com
-> *o que foi feito, alternativas, por que escolhi esta, risco e como explicar em 1 frase*, (3) dicionário
-> de variáveis, (4) tabela de resultados para você preencher após rodar o script e (5) perguntas
-> prováveis da banca com respostas. Tudo o que está marcado **[PREENCHER]** depende da saída do seu R.
+> Como usar este documento: (1) raciocínio geral, (2) cada decisão numerada (D1…D14) com *o que foi feito,
+> alternativas, por que esta, risco e como explicar em 1 frase*, (3) dicionário de variáveis, (4) a tabela de
+> resultados, (5) os alertas encontrados na execução e (6) perguntas prováveis da banca.
 
 ---
 
@@ -31,12 +31,12 @@ em que `π_i` é a probabilidade de baixo peso no município *i* e os `x` são c
 
 ("Sucesso" é só o nome do evento de interesse na binomial; não é "bom".)
 
-**O que o enunciado e as orientações exigem na preparação (e onde cada item foi atendido):**
+**Exigências do enunciado/orientações e onde foram atendidas:**
 
 | Exigência (Temas.pdf / Orientações.pdf) | Onde/como foi atendida |
 |---|---|
 | Município de residência **da mãe**, não de ocorrência | D2 |
-| Período claramente definido; informar fonte, **data de extração** e **período efetivamente coberto** | D1, D3 |
+| Período definido; informar fonte, **data de extração** e **período efetivamente coberto** | D1, D3 |
 | "Exibir linhas zeradas" e conferir se todos os municípios aparecem | D7 |
 | Distinguir zero de informação ausente/ignorada; não converter ignorado em zero | D5, D9 |
 | Excluir peso ignorado do denominador e **informar sua frequência** | D5 |
@@ -45,194 +45,216 @@ em que `π_i` é a probabilidade de baixo peso no município *i* e os `x` são c
 | Município sem nascimento elegível (denominador 0) não entra no ajuste | D7 |
 | 4 a 8 preditores candidatos, com justificativa | D8 |
 | Preditores quantitativos contínuos; **não** transformar % em "alto/baixo" por quartis | D11 |
-| Evitar preditores que sejam componentes da resposta ou calculados a partir dela | D8 (exclusões) |
+| Evitar preditores que sejam componentes da resposta ou calculados a partir dela | D8 |
 | Compatibilidade temporal (ano de cada variável) | D1 |
-| Registrar fonte, definição, unidade e ano de cada variável | Seção 4 deste documento |
+| Registrar fonte, definição, unidade e ano de cada variável | Seção 4 |
 
 ---
 
 ## 2. Decisões (D1 a D14)
 
-### D1 — Fonte: microdados do SINASC (arquivo `DNSC2026.dbc`) em vez de tabulação do TABNET
+### D1 — Fonte: microdados do SINASC (`DNSC2026.dbc`), 2ª prévia, em vez de tabulação do TABNET
 
-* **Decisão:** usar as Declarações de Nascidos Vivos individuais de SC, 2026, baixadas em
-  `datasus.saude.gov.br/transferencia-de-arquivos`, lidas com `datasusr::read_datasus_dbc()`.
+* **Decisão:** usar as Declarações de Nascidos Vivos individuais de SC, 2026, lidas com
+  `datasusr::read_datasus_dbc()`. O site informa: **"Dados de 2026 – 2ª prévia – data de extração 01/09/2026"**.
 * **Alternativa:** tabular no TABNET (município de residência × peso ao nascer), como o enunciado descreve.
 * **Por que microdados:**
-  1. Os preditores municipais pedidos (proporção de mães adolescentes, escolaridade, pré-natal, gestações
-     múltiplas) são **calculados a partir dos próprios nascimentos**. Com microdados eu os calculo da *mesma
-     fonte, mesmo ano e mesma população* que a resposta → compatibilidade temporal perfeita.
-  2. Com o TABNET eu teria de fazer várias tabulações separadas e juntá-las, aumentando o risco de
-     inconsistência entre tabelas.
-  3. Reprodutibilidade: o script refaz tudo do zero a partir do arquivo bruto.
-* **Equivalência:** a tabulação do TABNET é justamente a contagem dos microdados por município; os
-  números de sucessos e denominadores são os mesmos que o TABNET produziria (útil como *conferência*:
-  se quiser, tabule 1 ou 2 municípios no TABNET e compare com a minha base).
-* **Risco:** o enunciado menciona o TABNET; deixe explícito que o resultado é equivalente.
+  1. Os preditores municipais pedidos (adolescentes, escolaridade, pré-natal, gestações múltiplas) são
+     **calculados a partir dos próprios nascimentos**. Com microdados eles saem da *mesma fonte, mesmo ano e
+     mesma população* da resposta, o que dá compatibilidade temporal perfeita.
+  2. Com o TABNET seriam várias tabulações separadas a juntar, com mais risco de inconsistência.
+  3. Reprodutibilidade: o script refaz tudo a partir do arquivo bruto.
+* **Equivalência:** a tabulação do TABNET é a contagem dos microdados por município. Conferência opcional:
+  tabule 1–2 municípios no TABNET e compare com a base.
+* **Duas datas diferentes (não confundir):** *data de extração* = 01/09/2026 (informada pelo DATASUS; é a
+  que vai no relatório) e *data de download* = 31/10/2026 (quando você baixou o arquivo; fica nos metadados).
+* **"Prévia" importa:** são dados preliminares, sujeitos a revisão pelo Ministério da Saúde (limitação).
 * **Em uma frase:** *"Usei os microdados porque os preditores municipais saem dos mesmos nascimentos da
   resposta, garantindo mesma fonte e mesmo ano."*
 
 ### D2 — Unidade geográfica: município de **residência da mãe** (`codmunres`)
 
-* **Decisão:** agrupar por `codmunres` e manter apenas registros com `codmunres` começando por `42` (SC).
+* **Decisão:** agrupar por `codmunres`, mantendo registros com `codmunres` começando por `42` (SC).
 * **Por que residência e não ocorrência (`codmunnasc`):** o tema pergunta sobre diferenças entre municípios
   *de residência das mães*; as características (idade, escolaridade…) são das mães residentes; e muitas
-  mulheres parem em município-polo diferente do que moram (ocorrência concentraria casos nos polos).
-* **Observação do cabeçalho:** nas 6 primeiras linhas aparecem `codmunnasc` de outros estados (ex.: 120040,
-  150130) para mães de SC. Isso mostra por que **não** se deve usar ocorrência, e o fluxo de perdas (etapa 2)
-  vai mostrar quantos registros do arquivo têm mãe residente fora de SC (se for ~0, o arquivo já está
-  organizado por UF de residência).
-* **Risco:** se o arquivo `DNSC` fosse por ocorrência, mães de SC que parem fora de SC estariam ausentes
-  (**[PREENCHER]** conferir pelo fluxo de perdas e citar como limitação se for o caso).
-* **Código de município:** o SINASC usa 6 dígitos (sem o dígito verificador do IBGE); a lista oficial é
-  reduzida a 6 dígitos para casar.
+  mulheres parem em município-polo diferente do que moram (a ocorrência concentraria casos nos polos).
+* **Resultado da execução:** o filtro "mãe residente em SC" **não eliminou nenhum registro** (64.472 → 64.472).
+  Se o arquivo fosse por ocorrência haveria mães de outras UFs; como não há nenhuma, o arquivo está
+  organizado por **UF de residência**. Reforço: no cabeçalho aparecem nascimentos de mães de SC ocorridos
+  em município de outro estado (`codmunnasc` 12…, 15…). O script agora tabula isso
+  (`nasceu_em_SC`); **Resultado: 653 nascimentos (1,01%) ocorreram fora de SC e 63.819 em SC**. Isso confirma que o arquivo é por residência da mãe.
+* **Consequência:** não há perda por este critério e o problema "mães de SC que parem fora de SC ficariam
+  ausentes" **não se aplica** a este arquivo.
+* **Código de município:** o SINASC usa 6 dígitos (sem dígito verificador); a lista oficial foi reduzida a
+  6 dígitos para casar.
 
-### D3 — Período: nascimentos de 2026 (parcial) e comunicação do período efetivo
+### D3 — Período: jan–ago/2026 (parcial); agosto é incompleto
 
-* **Decisão:** manter só `dtnasc` em 2026 (as orientações pedem o ano mais recente). Reportar o período
-  **efetivo** = `min(dtnasc)` a `max(dtnasc)` (o script imprime).
-* **Por que importa:** 2026 não terminou. No cabeçalho vemos cadastros até ~31/08/2026 e recebimentos até
-  ~01/09/2026, então o arquivo cobre aproximadamente **jan–ago/2026**. **[PREENCHER com a saída]**.
-* **Risco/limitação:** os meses finais podem estar incompletos por atraso de notificação (tabela de
-  nascimentos por mês no script). Como o atraso tende a ser parecido entre municípios, o efeito sobre a
-  *proporção* é menor do que sobre as contagens; mas deve entrar nas limitações.
-* **Registros com `dtnasc` de outro ano** (registro tardio de 2025, por exemplo) saem; a quantidade aparece
-  no fluxo de perdas.
-* **Data de extração:** o script usa a data de modificação do arquivo baixado; **confirme** (é a data do seu
-  download) e escreva no slide de dados.
+* **Decisão:** manter só `dtnasc` em 2026 (as orientações pedem o ano mais recente). Nenhum registro de
+  outro ano apareceu (perda = 0).
+* **Período efetivamente coberto (saída do R):** **01/01/2026 a 31/08/2026**; último recebimento no sistema
+  em 01/09/2026.
+* **Achado (ver D3b e Seção 6):** nascimentos por mês = 8.543 · 7.517 · 8.837 · 8.751 · 8.788 · 8.372 ·
+  8.578 · **5.086**. Agosto tem ~60% do volume dos meses completos: **notificação ainda incompleta**.
+
+### D3b — Como tratar agosto (decisão a confirmar com as verificações do script)
+
+* **Opções:**
+  1. **Manter jan–ago como base principal** e rodar **análise de sensibilidade jan–jul** na Etapa C.
+  2. Restringir tudo a jan–jul (meses completos), perdendo ~5.100 nascimentos (≈ 7,9%).
+* **Recomendação:** opção 1, desde que as checagens (novo bloco do script) mostrem que agosto não é
+  diferente de jan–jul. As checagens são: nascimentos por dia de agosto; taxa de baixo peso de agosto vs
+  jan–jul (`prop.test`); perfil dos preditores; municípios que perderiam todos os nascimentos sem agosto.
+* **Por que manter não é absurdo:** cada registro presente é um nascimento válido; a incompleteza afeta o
+  tamanho `n_i`, não a validade de `Y_i ~ Binomial(n_i, π_i)`. O risco real é de **seleção**: se os
+  nascimentos que demoram a ser notificados forem sistematicamente diferentes (por município ou por risco),
+  a taxa de agosto fica enviesada. As checagens testam isso; a sensibilidade quantifica o impacto.
+* **Por que restringir também é defensável:** dá uma janela limpa (jan–jul) e elimina o risco de seleção;
+  custo: menos dados e municípios pequenos ainda menores.
+* **Regra de decisão sugerida:** se a taxa de agosto estiver próxima da de jan–jul (diferença pequena e sem
+  evidência forte) **e** nenhum município ficar sem nascimentos sem agosto, mantenha jan–ago como principal.
+  Caso contrário, use jan–jul como principal e jan–ago como sensibilidade. **DECISÃO TOMADA: manter jan–ago como base principal** (resultado das checagens abaixo), com sensibilidade jan–jul na Etapa C.
+* **Resultado das checagens:**
+  1. **Por dia:** de 01 a 14/08 há ~210–290 nascimentos/dia (normal, ~270/dia); a queda começa por volta do dia 15 e é
+     forte depois do dia 22; nos dias 27–31 há 14, 4, 2, 1 e 1 registros. Ou seja, **agosto está praticamente completo
+     até meados do mês e muito incompleto na 2ª quinzena**.
+  2. **Taxa de baixo peso:** agosto **8,22%** (418/5.085) e jan–jul **8,22%** (4.884/59.384); `prop.test`: p = 1,
+     IC95% da diferença (−0,79 p.p.; +0,79 p.p.). **Sem diferença.**
+  3. **Preditores:** perfis muito parecidos (ex.: adolescentes 7,35% vs 7,46%; pré-natal insuficiente 8,3% vs 9,0%;
+     mães ≥35 anos 20,8% vs 20,3%).
+  4. **Municípios:** nenhum perderia todos os nascimentos sem agosto; sem agosto cada município mantém de 71% a 100% do
+     seu `n` (mediana 92%).
+* **Como justificar:** a incompletude de agosto reduz `n_i`, mas não alterou a taxa nem o perfil dos preditores, e a
+  sensibilidade jan–jul mostrará se as conclusões mudam. Ressalva honesta: ausência de diferença nas médias não *prova*
+  ausência de seleção; por isso a sensibilidade.
+* **Como descrever o período no trabalho:** "nascimentos de 01/01 a 31/08/2026 (2ª prévia, extração 01/09/2026),
+  com notificação de agosto incompleta na segunda quinzena".
+* **Em uma frase:** *"Agosto estava incompleto; verifiquei se diferia dos demais meses e rodei a análise com
+  e sem ele para mostrar que a conclusão não depende dessa escolha."*
 
 ### D4 — Definição da resposta (sucessos, insucessos, denominador)
 
-* `baixo_peso` = `peso < 2500` (g). `demais` = `peso ≥ 2500`. `n_nascidos` = soma, apenas com peso conhecido.
-* **Unidade:** o *nascido vivo* (um gêmeo = duas linhas), como no SINASC. Isso é o que o tema define:
-  denominador = "nascidos vivos com peso conhecido". Não é "gestações" nem "partos".
-* **Nascidos vivos de peso muito baixo** (< 500 g) **não** são excluídos: são nascidos vivos legítimos e
-  baixo peso por definição. O script apenas mostra `summary(peso)` para você inspecionar extremos.
-* **Em uma frase:** *"Baixo peso é peso < 2.500 g entre nascidos vivos com peso conhecido; os demais são os insucessos."*
+* `baixo_peso` = `peso < 2500` g. `demais` = `peso ≥ 2500`. `n_nascidos` = soma, apenas com peso conhecido.
+* **Unidade:** o *nascido vivo* (gêmeos = duas linhas), como no SINASC e como o tema define.
+* **Pesos extremos:** o mínimo é **122 g**, que provavelmente é erro de digitação, mas **não é excluído**:
+  qualquer valor < 2.500 g já é baixo peso, então a classificação não muda (e excluir "porque parece
+  estranho" seria uma exclusão não justificada). O script lista os 10 menores e conta os < 500 g.
+* **Em uma frase:** *"Baixo peso é peso < 2.500 g entre nascidos vivos com peso conhecido; os demais são os
+  insucessos."*
 
-### D5 — Peso ignorado: sai do denominador e sua frequência é reportada
+### D5 — Peso ignorado: sai do denominador e a frequência é reportada
 
-* **Decisão:** peso é ignorado se vazio/NA, `0` ou `9999`. Esses registros **não** entram nem como sucesso
-  nem como insucesso; contamos quantos são (número e %) e por município (`n_peso_ignorado`).
-* **Por que não classificar como "não baixo peso":** seria tratar "não sei" como "normal", subestimando a
-  taxa. O tema pede explicitamente para excluir do denominador.
-* **Risco:** se o peso ignorado for mais frequente em certos municípios (e/ou em partos de maior risco),
-  há viés de seleção. Reporte a % global e verifique se ela é pequena (**[PREENCHER]**).
-* **Verificação feita no script:** a tabela de códigos mostra se há outro código de "ignorado" além de
-  vazio/0/9999. Se aparecer, ajuste a regra e registre aqui.
+* **Decisão:** peso é ignorado se vazio/NA, `0` ou `9999`. Esses registros não entram como sucesso nem
+  insucesso.
+* **Resultado:** apenas **3 registros** (0,005%), todos **vazios/NA**; não há `0` nem `9999`. A regra
+  funcionou e **não há outro código suspeito**.
+* **Por que não classificar como "não baixo peso":** seria tratar "não sei" como "normal". O tema pede
+  excluir do denominador.
+* **Risco:** viés de seleção por peso ignorado é desprezível com 0,005%.
 
 ### D6 — Município ignorado
 
-* **Decisão:** registros com `codmunres == "420000"` (código SINASC de "município ignorado" de SC) são
-  separados e contados, e **não** entram na base municipal (não há como atribuí-los a um município).
-* **Por que:** as orientações mandam separar e informar quantos registros não puderam ser atribuídos.
+* **Decisão:** `codmunres == "420000"` seria separado e contado. **Resultado: 0 registros.** Nenhum código
+  dos dados ficou fora da lista oficial (`codigos_fora_da_lista = character(0)`).
 
-### D7 — Lista oficial dos 295 municípios e tratamento dos zeros
+### D7 — Lista oficial de 295 municípios e tratamento dos zeros
 
-* **Decisão:** partir da lista oficial de municípios de SC (via `geobr`, IBGE) e fazer `left_join` com os
-  agregados. Município sem nascimentos recebe `0` (é um **zero real**: nenhum nascimento ocorreu).
-* **Por que:** com microdados, município sem nascimento simplesmente não aparece (não há linha). Isso é o
-  equivalente ao "Exibir linhas zeradas" do TABNET, e a própria orientação alerta que a opção sozinha não
-  garante a integridade da lista; por isso conferimos contra uma lista externa (o script checa que não há
-  código nos dados fora da lista e que `nrow == 295`).
-* **Denominador 0 → fora do ajuste:** `cbind(0, 0)` não tem informação para a binomial (taxa indefinida).
-  Esses municípios ficam em `base_municipal_sc2026_completa.rds` (com flag `entra_no_ajuste = FALSE`) e
-  são listados em `output/tabelas/municipios_sem_nascimento.csv`. Em 2026, com 8 meses de dados, é provável
-  que haja alguns municípios muito pequenos nesta situação (**[PREENCHER]**).
-* **Em uma frase:** *"Zero é diferente de ausente: município sem nascimento tem contagem zero, mas
-  denominador zero não informa taxa, então sai do ajuste e eu informo quais são."*
+* **Decisão:** partir da lista oficial de SC (`geobr`, IBGE; **295**, como esperado) e fazer `left_join`
+  com os agregados; zero real quando não há nascimento; denominador 0 → fora do ajuste.
+* **Resultado:** **todos os 295 municípios têm nascimentos** (mínimo = 8), então **nenhum** sai por
+  denominador zero. *(Na versão anterior deste documento eu havia dito que provavelmente haveria alguns
+  municípios sem nascimento; isso não se confirmou. A lógica de segurança foi mantida porque ela é parte
+  da garantia de integridade.)*
+* **Por que conferir contra lista externa:** com microdados, município sem nascimento simplesmente não
+  aparece; é o equivalente ao "Exibir linhas zeradas" do TABNET, e a orientação alerta que a opção sozinha
+  não garante a lista completa.
+* **Em uma frase:** *"Zero é diferente de ausente; conferi os 295 municípios contra a lista do IBGE e todos
+  têm denominador positivo."*
 
 ### D8 — Preditores candidatos (e o que ficou de fora de propósito)
 
-Todos são **proporções municipais** calculadas sobre a base de análise (peso conhecido):
+Todos são **proporções municipais** calculadas sobre a base de análise:
 
-| Variável (nome na base) | Definição | Por que é candidata |
+| Variável | Definição | Por que é candidata |
 |---|---|---|
 | `prop_adolescente` | % de mães de 10 a 19 anos | Gravidez na adolescência associada a prematuridade e baixo peso |
-| `prop_esc_baixa` | % de mães com < 8 anos de estudo (`escmae` 1–3) | Proxy de condição socioeconômica e acesso a cuidado |
-| `prop_prenatal_insuf` | % de mães com < 6 consultas de pré-natal (`consprenat`) | Pré-natal inadequado associado a desfechos perinatais piores |
-| `prop_gestacao_mult` | % de nascidos de gravidez dupla/tripla+ (`gravidez` 2–3) | Gestações múltiplas têm peso menor por natureza |
-| `prop_mae_35mais` *(extra, opcional)* | % de mães com ≥ 35 anos | Idade materna avançada é fator de risco clássico; permite testar a "outra ponta" da idade |
+| `prop_esc_baixa` | % de mães com < 8 anos de estudo (`escmae` 1–3) | Proxy socioeconômica e de acesso a cuidado |
+| `prop_prenatal_insuf` | % de mães com < 6 consultas (`consprenat`) | Pré-natal inadequado associado a piores desfechos perinatais |
+| `prop_gestacao_mult` | % de nascidos de gravidez dupla/tripla+ | Gestações múltiplas têm peso menor por natureza |
+| `prop_mae_35mais` *(extra)* | % de mães ≥ 35 anos | Idade materna avançada é fator de risco clássico |
 
-* O enunciado lista os 4 primeiros; as orientações pedem 4–8 e dizem que "nem todos precisam integrar o
-  modelo final". O 5º é uma sugestão minha para enriquecer a seleção; **você pode descartá-lo** sem custo.
+* O enunciado lista os 4 primeiros; as orientações pedem 4–8 e dizem que nem todos precisam entrar no
+  modelo final. O 5º é uma sugestão minha; **você pode descartá-lo**.
 * **Deixados de fora de propósito:**
-  * **`gestacao` / semanas de gestação (prematuridade):** é o principal determinante do peso. Tende a ser
-    *mediador* (parte do caminho que leva ao baixo peso) e é quase uma "consequência/irmão" da resposta;
-    incluí-la esconderia os demais efeitos e viola o espírito de "evitar preditores que revelem diretamente
-    a resposta".
-  * **Apgar, sexo do bebê, malformação, tipo de parto:** são características do recém-nascido/do parto
-    (consequências ou simultâneas ao desfecho), não do município como contexto materno.
-  * **Qualquer indicador calculado a partir do peso** (óbvio, mas vale dizer na banca).
-* **Interpretação (importante):** são associações **entre municípios**. Não se pode concluir que "uma
-  mãe adolescente tem maior risco" (falácia ecológica); só que "municípios com maior % de adolescentes
-  tendem a ter maior probabilidade de baixo peso".
+  * **`gestacao` / semanas de gestação:** principal determinante do peso; é *mediador* (parte do caminho
+    até o baixo peso) e esconderia os demais efeitos; viola o espírito de "evitar preditores que revelem
+    diretamente a resposta".
+  * **Apgar, sexo do bebê, malformação, tipo de parto:** características do recém-nascido/parto, não do
+    contexto materno municipal.
+  * **Qualquer indicador calculado a partir do peso.** Nenhum preditor usa `peso`; todos vêm de variáveis
+    da mãe/gestação, por isso **não são "componentes da resposta"**.
+* **Interpretação:** associações **entre municípios**, não sobre a mãe individual (falácia ecológica).
 
-### D9 — Informação ignorada nos preditores: sai do cálculo da proporção, não vira zero
+### D9 — Informação ignorada nos preditores: sai do cálculo, não vira zero
 
-* **Decisão:** para cada variável, códigos "ignorado" ou fora do domínio válido viram `NA` e a proporção
-  municipal é calculada **entre os registros com informação válida** daquela variável
-  (`mean(x, na.rm = TRUE)`).
-  * Idade válida: 10–59 anos (fora disso, NA).
-  * `escmae` válida: 1–5 (9 e vazio → NA). `gravidez` válida: 1–3. `consprenat` válida: 0–98 (99 → NA).
-* **Alternativas:** (a) tratar ignorado como categoria própria (aumenta o nº de preditores e quase não há
-  informação), (b) imputar. Para variáveis demográficas com ignorados tipicamente raros, usar os válidos é o
-  padrão e simples de explicar.
-* **Risco:** se a % de ignorado for alta em algum município, a proporção fica instável. O script mostra a %
-  global (tabela `qualidade_variaveis.csv`) e quantos municípios ficaram com preditor `NA`
-  (**[PREENCHER]**; se houver, o `glm` descartará essas linhas — nesse caso o n do modelo muda e deve ser dito).
+* **Decisão:** códigos "ignorado" ou fora do domínio válido viram `NA`; a proporção municipal usa só os
+  registros com informação válida. Domínios: idade 10–59; `escmae` 1–5; `gravidez` 1–3; `consprenat` 0–98.
+* **Resultado (base de análise, n = 64.469):** idade **0%** ignorada; escolaridade **0,166%** (107);
+  pré-natal **0,271%** (175); tipo de gravidez **0,039%** (25). **Nenhum município ficou com preditor NA.**
+* **Conclusão:** a perda por ignorados é desprezível; o `glm` usará os 295 municípios completos.
+* **Nota:** idade variou de 12 a 55 anos, faixa plausível; nada foi invalidado.
 
-### D10 — Definição de "pré-natal insuficiente"
+### D10 — Definição de "pré-natal insuficiente" (confirmada)
 
-* **Decisão:** `consprenat < 6`, isto é, menos de 6 consultas.
-* **Por quê:** o Ministério da Saúde (Programa de Humanização do Pré-natal/Rede Cegonha) recomenda no
-  mínimo 6 consultas; é o limiar usual em indicadores nacionais.
-* **Por que `consprenat` e não `consultas`:** `consultas` (documentada no PDF de estrutura) vem agrupada em
-  faixas (1 nenhuma, 2 de 1–3, 3 de 4–6, 4 de 7+) e **não permite separar 6 de 4–5**. `consprenat` traz o
-  número exato. Nas 6 linhas do cabeçalho, `consprenat` (13, 12, 04, 12, 08, 17) é coerente com `consultas`
-  (4, 4, 3, 4, 4, 4); o script faz esta checagem para a base inteira.
-* **Atenção:** o PDF "Estrutura_SINASC_para_CD" fornecido é de layout antigo e **não descreve** `consprenat`,
-  `escmae2010` etc. Confirme no dicionário atual do DATASUS (Estrutura da DN) e cite-o. Se a descrição de
-  `consprenat` for diferente de "número de consultas", **esta decisão muda**.
-* **Análise de sensibilidade (opcional, Etapa C):** refazer o modelo com `< 7` ou com a definição por
-  faixas (`consultas ≤ 2`) e ver se as conclusões mudam.
+* **Decisão:** `consprenat < 6`.
+* **Por quê:** o Ministério da Saúde recomenda no mínimo 6 consultas; é o limiar usual.
+* **Por que `consprenat` e não `consultas`:** `consultas` vem em faixas (1 nenhuma, 2 de 1–3, 3 de 4–6, 4
+  de 7+) e **não separa 6 de 4–5**; `consprenat` traz o número exato.
+* **Evidência de que `consprenat` é o número de consultas:**
+  1. No `NASCIDO.def` (arquivos auxiliares do TABNET) ela aparece como **"Consultas Detalh"**, ou seja, a
+     versão *detalhada* de `CONSULTAS` (mesmo padrão de `SEMAGESTAC` = "Semanas Gest Detalh").
+  2. **Tabela cruzada na base inteira:** `consultas` × faixa de `consprenat` tem concordância **perfeita**
+     (320 · 1.680 · 7.901 · 54.396 na diagonal, zero fora dela). Isso valida a interpretação.
+* **Pendência resolvida (`SEMADUM.CNV`):** o arquivo de conversão tem 44 categorias: `N Inf`, depois as consultas
+  **01 a 42** (uma categoria para cada) e **"43 e+" = 43 a 50**. Conclusões:
+  1. `consprenat` é de fato o **número de consultas** (categorias numéricas).
+  2. Tudo o que está fora de 01–50 cai em **"N Inf"** (não informado), incluindo `99`. Isso é coerente com tratar
+     `99` como ignorado (62 registros na base de análise; + 113 vazios = 175 ignorados, igual ao que o script contou).
+  3. **Cuidado:** o código `00` **não aparece** em nenhuma categoria numerada; no TABNET ele provavelmente cai em
+     "N Inf", misturado com os ignorados. **No nosso tratamento, `00` é um valor VÁLIDO ("nenhuma consulta")**: a
+     tabela cruzada mostrou que `consprenat = 0` corresponde exatamente a `consultas = 1` ("nenhuma"; 320 casos),
+     que **conta como pré-natal insuficiente**. É uma diferença entre o nosso tratamento e a conversão do TABNET;
+     por isso **não** use `consprenat` para validar contra o TABNET (use as outras variáveis, ver Seção 9).
+* **Cauda de `consprenat`:** valores entre 32 e 41 (31 registros) e `99` (62). Nenhum código absurdo além do `99`.
+  O máximo plausível (41) está dentro das categorias do CNV. Nada a ajustar.
+* **Sensibilidade (Etapa C, opcional):** refazer com `< 7` ou com `consultas ≤ 2`.
 
 ### D11 — Preditores contínuos, sem categorizar
 
 * **Decisão:** manter as proporções em escala contínua (0 a 1).
-* **Por que:** orientações pedem preferir quantitativos contínuos e justificar categorizações; o tema
-  proíbe transformar o percentual em alto/baixo por quartis. Categorizar perderia informação e criaria
-  pontos de corte arbitrários.
-* **Detalhe para a Etapa C:** a escala 0–1 faz o coeficiente representar a mudança associada a
-  "100 pontos percentuais"; é melhor reescalar (ex.: por 10 pontos percentuais) *na interpretação*, sem alterar
-  a variável. Ficará explicado quando chegarmos lá.
+* **Por que:** as orientações preferem quantitativos contínuos e pedem justificar categorizações; o tema
+  proíbe transformar o percentual em alto/baixo por quartis.
+* **Detalhe para a Etapa C:** na escala 0–1 o coeficiente refere-se à mudança de "100 pontos percentuais";
+  na interpretação reescalamos (ex.: por 10 p.p.) sem alterar a variável.
 
 ### D12 — Municípios pequenos não são excluídos
 
-* **Decisão:** manter todo município com `n_nascidos > 0`, inclusive os minúsculos.
-* **Por que:** a binomial já dá menos peso a municípios com `n` pequeno (variância ∝ π(1−π)/n); excluir
-  seria arbitrário e contraria "não excluir por conveniência". O script reporta quantos têm < 30 nascimentos
-  e quantos têm 0 casos de baixo peso.
-* **Risco:** pode haver **superdispersão** (variabilidade extra-binomial, ex.: municípios diferem por
-  fatores não medidos) e possíveis observações influentes; tratamos nas Etapas C e D (quasi-binomial ou
-  beta-binomial, diagnóstico), conforme as orientações pedem.
+* **Decisão:** manter todo município com `n_nascidos > 0`.
+* **Por que:** a binomial já pondera por `n_i`; excluir seria arbitrário.
+* **Resultado:** mínimo 8 nascimentos; **80 municípios (27%) com < 30**; **24 com zero casos** de baixo peso.
+* **Riscos (ver Seção 6):** instabilidade das proporções, superdispersão, influência e a limitação do teste
+  de qualidade de ajuste pela deviance.
 
 ### D13 — Unicidade e duplicidades
 
-* **Decisão:** checar linhas 100% idênticas e `contador` repetido. **Não remover nada automaticamente**;
-  se o resultado for ≠ 0, investigar caso a caso e documentar aqui.
-* **Nota:** `id` único exigido nas orientações de outros temas; aqui o identificador disponível é
-  `contador` (o `numerodn` não está nas colunas do cabeçalho). Gêmeos geram linhas *distintas*, o que é
-  correto (D4).
-* **[PREENCHER]:** duplicadas = ___ ; contador repetido = ___.
+* **Resultado:** linhas 100% idênticas = **0**; `contador` repetido = **0**. Nada foi removido.
+* O identificador disponível é `contador` (não há `numerodn` nas colunas). Gêmeos são linhas distintas
+  (D4), o que é correto.
 
 ### D14 — Reprodutibilidade
 
-* Dado bruto fica em `data/raw/` **fora do Git** (`.gitignore`): é público, grande e baixável novamente;
-  o repositório guarda o *script* e a *data de extração*.
-* Scripts numerados (`01_`, `02_`, …) que rodam do início ao fim; parâmetros (cortes, ano, UF) no topo.
-* `sessionInfo()` salvo em `output/tabelas/` (versões dos pacotes).
-* Verificações com `stopifnot()` no script: se algo estiver inconsistente, ele para.
+* Dado bruto em `data/raw/` **fora do Git** (público e grande); o repositório guarda script e data de
+  extração. Scripts numerados; parâmetros no topo; `stopifnot()` para integridade; `sessionInfo()` salvo.
 
 ---
 
@@ -241,7 +263,7 @@ Todos são **proporções municipais** calculadas sobre a base de análise (peso
 ```
 .
 ├── README.md
-├── .gitignore                  # inclua: data/raw/  e  *.Rhistory
+├── .gitignore                  # data/raw/  e  *.Rhistory
 ├── data/
 │   ├── raw/                    # DNSC2026.dbc  (NÃO versionar)
 │   └── processed/              # base_municipal_sc2026.rds / .csv
@@ -250,7 +272,7 @@ Todos são **proporções municipais** calculadas sobre a base de análise (peso
 ├── docs/
 │   └── etapa_A_preparacao_dados.md
 └── output/
-    └── tabelas/                # fluxo_perdas.csv, qualidade_variaveis.csv, ...
+    └── tabelas/
 ```
 
 ---
@@ -261,76 +283,161 @@ Todos são **proporções municipais** calculadas sobre a base de análise (peso
 |---|---|---|---|---|
 | `cod6` | texto | Código IBGE do município (6 dígitos) | `codmunres` | — |
 | `nome` | texto | Nome do município | lista IBGE (`geobr`) | 2020 (malha) |
-| `n_nascidos` | inteiro | Nascidos vivos com peso conhecido (denominador) | contagem de linhas | 2026 |
-| `baixo_peso` | inteiro | Nascidos vivos com peso < 2.500 g (sucessos) | `peso` | 2026 |
-| `demais` | inteiro | Nascidos vivos com peso ≥ 2.500 g (insucessos) | `peso` | 2026 |
-| `n_peso_ignorado` | inteiro | Peso ignorado (fora do denominador, informativo) | `peso` | 2026 |
+| `n_nascidos` | inteiro | Nascidos vivos com peso conhecido (denominador) | contagem | 2026 |
+| `baixo_peso` | inteiro | Peso < 2.500 g (sucessos) | `peso` | 2026 |
+| `demais` | inteiro | Peso ≥ 2.500 g (insucessos) | `peso` | 2026 |
+| `n_peso_ignorado` | inteiro | Peso ignorado (fora do denominador) | `peso` | 2026 |
 | `prop_adolescente` | 0–1 | Mães de 10–19 anos | `idademae` | 2026 |
 | `prop_esc_baixa` | 0–1 | Mães com < 8 anos de estudo | `escmae` | 2026 |
 | `prop_prenatal_insuf` | 0–1 | Mães com < 6 consultas | `consprenat` | 2026 |
 | `prop_gestacao_mult` | 0–1 | Gravidez dupla ou mais | `gravidez` | 2026 |
 | `prop_mae_35mais` | 0–1 | Mães com ≥ 35 anos (extra) | `idademae` | 2026 |
-| `taxa_baixo_peso` | 0–1 | `baixo_peso / n_nascidos` (**só para descrever/plotar; NÃO é a resposta do modelo**) | derivada | 2026 |
+| `taxa_baixo_peso` | 0–1 | `baixo_peso / n_nascidos` (**só descrição/gráficos; NÃO é a resposta**) | derivada | 2026 |
 | `entra_no_ajuste` | lógico | `n_nascidos > 0` | derivada | — |
 
-> **Regra de ouro (orientações):** a resposta do modelo é `cbind(baixo_peso, demais)`, não a taxa nem
-> categorias dela. A taxa existe só para gráficos.
+> **Regra de ouro:** a resposta do modelo é `cbind(baixo_peso, demais)`, não a taxa.
 
 ---
 
-## 5. Resultados da Etapa A — preencher após rodar o script
+## 5. Resultados reais da Etapa A
 
 | Item | Valor |
 |---|---|
-| Arquivo / data de extração | DNSC2026.dbc / **[__/__/2026]** |
-| Período efetivo (primeiro e último nascimento) | **[__ a __]** |
-| Registros no arquivo | **[ ]** |
-| Mães residentes fora de SC (excluídas) | **[ ]** |
-| Nascimentos fora de 2026 (excluídos) | **[ ]** |
-| Município ignorado (420000) | **[ ]** |
-| Peso ignorado (n e %) | **[ ]** |
-| **Nascidos vivos na base de análise** | **[ ]** |
-| Total de baixo peso e taxa global (%) | **[ ]** |
-| Municípios oficiais / municípios no ajuste / sem nascimento | **295 / [ ] / [ ]** |
-| Municípios com < 30 nascimentos | **[ ]** |
-| % ignorado: idade / escolaridade / pré-natal / gravidez | **[ ]** |
-| Linhas duplicadas / `contador` repetido | **[ ] / [ ]** |
+| Arquivo / versão | `DNSC2026.dbc` — SINASC 2026, **2ª prévia** (64.472 linhas × 61 colunas) |
+| Data de extração (DATASUS) / data de download | **01/09/2026** / 31/10/2026 |
+| Período efetivo | **01/01/2026 a 31/08/2026** |
+| Mães residentes fora de SC (excluídas) | 0 |
+| Nascimentos fora de 2026 (excluídos) | 0 |
+| Município ignorado (420000) | 0 |
+| Peso ignorado | **3** (0,005%) — todos vazios |
+| **Nascidos vivos na base de análise** | **64.469** |
+| Baixo peso (total) e taxa global | **5.302** · **8,22%** |
+| Municípios (oficiais / no ajuste / sem nascimento) | **295 / 295 / 0** |
+| Nascidos por município (min · Q1 · mediana · média · Q3 · máx) | 8 · 28 · 67 · 218,5 · 169 · 4.978 |
+| Municípios com < 30 nascimentos / com 0 caso de baixo peso | **80 / 24** |
+| % ignorado: idade · escolaridade · pré-natal · gravidez | 0 · 0,166 · 0,271 · 0,039 |
+| Linhas duplicadas / `contador` repetido | 0 / 0 |
+| Nascimentos por mês (jan→ago) | 8.543 · 7.517 · 8.837 · 8.751 · 8.788 · 8.372 · 8.578 · **5.086** |
+
+**Funil de perdas:** 64.472 → 64.472 → 64.472 → 64.472 → **64.469** (única perda: peso ignorado, 3).
+
+**Preditores municipais (média ponderada igual por município):**
+
+| Variável | Mín | Q1 | Mediana | Média | Q3 | Máx |
+|---|---|---|---|---|---|---|
+| `prop_adolescente` | 0,000 | 0,052 | 0,077 | 0,081 | 0,108 | 0,333 |
+| `prop_esc_baixa` | 0,000 | 0,028 | 0,055 | 0,060 | 0,080 | 0,308 |
+| `prop_prenatal_insuf` | 0,000 | 0,043 | 0,076 | 0,078 | 0,107 | 0,267 |
+| `prop_gestacao_mult` | 0,000 | 0,000 | 0,016 | 0,024 | 0,033 | 0,174 |
+| `prop_mae_35mais` | 0,000 | 0,143 | 0,182 | 0,185 | 0,225 | 0,471 |
+
+**Correlações entre preditores:** todas fracas (máximo em módulo = 0,19, entre `prop_adolescente` e
+`prop_mae_35mais`). **Não há indício de multicolinearidade.**
 
 ---
 
-## 6. Perguntas prováveis da banca (e respostas curtas)
+## 6. Alertas e pontos de atenção encontrados na execução
 
-1. **Por que microdados e não TABNET?** Os preditores municipais saem dos mesmos nascimentos; garante
-   mesma fonte e mesmo ano. O resultado é equivalente à tabulação do TABNET. (D1)
-2. **Por que residência da mãe?** O tema compara municípios de residência; características e risco são da
-   mãe residente; ocorrência concentraria casos nos polos. (D2)
-3. **2026 está completo?** Não; cobre até ~agosto. Atrasos de notificação podem afetar os últimos meses;
-   entra como limitação. (D3)
-4. **O que você fez com peso ignorado?** Saiu do denominador, reportei n e %. Não é "normal", é "não sei". (D5)
-5. **Por que não usar a taxa como resposta?** Porque a taxa ignora o tamanho `n_i` de cada município; a
-   binomial usa `cbind(sucessos, insucessos)` e pondera corretamente (um município com 3 nascimentos e 1 caso
-   não vale o mesmo que outro com 3.000 e 1.000). (Seção 1)
-6. **Por que não incluir semanas de gestação, que explica o peso?** É mediadora/quase a própria resposta;
-   violaria a regra de não usar preditores que revelem o desfecho. (D8)
-7. **Município sem nascimento?** Zero real, denominador zero, sai do ajuste e listo quais. (D7)
-8. **Por que o limiar de 6 consultas?** Recomendação mínima do Ministério da Saúde; `consprenat` permite
-   isso, `consultas` (faixas) não. (D10)
-9. **Os coeficientes valem para a mãe individual?** Não; são associações entre municípios (falácia ecológica). (D8)
-10. **E municípios minúsculos?** Mantidos; a binomial já pondera por `n_i`; avaliamos superdispersão e
-    influência na modelagem. (D12)
-11. **Por que proporções contínuas e não faixas?** Evita perda de informação e cortes arbitrários;
-    exigência das orientações. (D11)
+**Nenhum problema impede de avançar. A1 e A6 foram resolvidos; A2–A5 são pontos que você deve saber explicar.**
+
+1. **A1 — Agosto incompleto (RESOLVIDO).** 5.086 nascimentos contra ~8.500 nos demais meses; incompleto sobretudo na
+   2ª quinzena. As checagens não mostraram diferença na taxa nem no perfil; decisão: manter jan–ago e fazer
+   sensibilidade jan–jul (D3b).
+2. **A2 — "Prévia".** Dados preliminares; os números podem mudar nas versões seguintes. Limitação a citar.
+3. **A3 — Municípios pequenos e instabilidade.** 27% dos municípios têm < 30 nascimentos e 24 têm zero
+   caso. Consequências: (a) a taxa observada desses municípios é muito ruidosa; (b) os **preditores** dos
+   municípios pequenos também são ruidosos (proporção calculada com poucos nascimentos), o que pode
+   atenuar associações (erro de medida na covariável); (c) **`prop_gestacao_mult` tem 1º quartil = 0**
+   (muitos municípios sem nenhuma gestação múltipla), logo é assimétrica e sustentada por poucos
+   municípios; observe isso na exploratória.
+4. **A4 — Teste de qualidade de ajuste pela deviance (Etapas C/D).** Os slides da disciplina dizem que o
+   teste assintótico pela deviance exige, na binomial, `m·π ≥ 3` e `m·(1−π) ≥ 3`. Com `n_i` = 8 e π ≈ 0,08,
+   `m·π ≈ 0,6 < 3`. Para muitos municípios a regra **não é satisfeita**, então o p-valor χ² da deviance
+   não é confiável. Use a **estimativa de dispersão por Pearson**, resíduos quantílicos/envelope
+   simulado e, se quiser, p-valor por simulação (como no script de deviance da disciplina).
+5. **A5 — Peso mínimo de 122 g.** Provável erro de digitação, mas inócuo para a classificação (D4).
+6. **A6 — Pendências (RESOLVIDAS).** `SEMADUM.CNV` confirmou que `consprenat` é número de consultas e que `99` é
+   "não informado"; 653 nascimentos (1,01%) de mães de SC ocorreram fora de SC, confirmando o arquivo por residência.
+   Ressalva nova: o TABNET trata `00` provavelmente como "N Inf" (D10).
+
+**O que está bem:** nenhuma duplicata; nenhum registro perdido além de 3 pesos vazios; os 295 municípios
+conferem com o IBGE; ignorados < 0,3% em todos os preditores; taxa global de 8,22% é compatível com o
+esperado para o Brasil (8–9%); `consprenat` validada contra `consultas`; preditores pouco correlacionados;
+volume de eventos (5.302) muito alto em relação ao nº de parâmetros, então não há problema de "poucos
+eventos" no ajuste municipal.
 
 ---
 
-## 7. Checklist antes de passar à Etapa B
+## 7. Perguntas prováveis da banca (e respostas curtas)
 
-- [ ] Script rodou do início ao fim sem erro (e os `stopifnot` passaram).
-- [ ] Seção 5 preenchida com as saídas reais.
-- [ ] Conferi a descrição de `consprenat` no dicionário atual do DATASUS (D10).
-- [ ] Conferi se há outros códigos de peso ignorado além de vazio/0/9999 (D5).
-- [ ] Comparei 1–2 municípios com o TABNET (opcional, mas ótimo argumento na defesa).
-- [ ] `commit` com: script, este documento, `output/tabelas/` e `.gitignore` (sem `data/raw`).
+1. **Por que microdados e não TABNET?** Os preditores municipais saem dos mesmos nascimentos; mesma fonte e
+   mesmo ano. Equivale à tabulação. (D1)
+2. **Por que residência da mãe?** O tema compara municípios de residência; as características são da mãe
+   residente; ocorrência concentraria nos polos. O arquivo já é por residência. (D2)
+3. **2026 está completo?** Não. Cobre 01/01 a 31/08, é a 2ª prévia e agosto está incompleto; avaliei se agosto
+   difere dos demais meses e fiz sensibilidade sem ele. (D3, D3b)
+4. **O que fez com peso ignorado?** Saiu do denominador; foram 3 registros (0,005%). (D5)
+5. **Por que não usar a taxa como resposta?** A taxa ignora o tamanho `n_i`; a binomial usa
+   `cbind(sucessos, insucessos)` e pondera: 1 caso em 3 nascimentos não vale como 1.000 em 3.000. (Seção 1)
+6. **Por que não incluir semanas de gestação?** É mediadora/quase a própria resposta. (D8)
+7. **Município sem nascimento?** Verifiquei os 295 contra o IBGE; nenhum tem denominador zero. (D7)
+8. **Por que o limiar de 6 consultas?** Mínimo recomendado pelo Ministério; `consprenat` permite, `consultas`
+   (faixas) não; e validei `consprenat` contra `consultas`. (D10)
+9. **Os coeficientes valem para a mãe individual?** Não; são associações entre municípios. (D8)
+10. **E municípios minúsculos?** Mantidos; a binomial pondera por `n_i`; avaliamos superdispersão e
+    influência. (D12, A3)
+11. **Por que proporções contínuas?** Evita perda de informação e cortes arbitrários. (D11)
+12. **Por que não excluiu o peso de 122 g?** Qualquer valor < 2.500 g já é baixo peso; excluir seria sem
+    justificativa. (D4)
+13. **Preditores e resposta vêm das mesmas DNs; isso não é circular?** Não: nenhum preditor usa `peso`;
+    vêm de características da mãe/gestação. É o desenho ecológico usual. (D8)
+
+---
+
+## 8. Checklist antes da Etapa B
+
+- [x] Script rodou do início ao fim; `stopifnot` passou.
+- [x] Funil de perdas, qualidade e estatísticas descritivas obtidos (Seção 5).
+- [x] `consprenat` validada contra `consultas` e identificada no `.def`.
+- [x] Data de extração oficial registrada (01/09/2026).
+- [x] Bloco de agosto rodado; decisão: manter jan–ago (D3b).
+- [x] `SEMADUM.CNV` verificado (D10).
+- [x] Nascimentos de mães de SC ocorridos fora de SC conferidos: 653 (D2); cauda de `consprenat` sem problemas.
+- [ ] Conferir a base com o TABNET (Seção 9, script `02_conferencia_tabnet.R`).
+- [ ] `commit` com script, este documento, `output/tabelas/` e `.gitignore` (sem `data/raw`).
 
 **Próxima etapa (B):** análise exploratória (distribuição de `taxa_baixo_peso`, relação com cada preditor
-ponderando pelo tamanho do município, correlações entre preditores, mapa/gráficos), ainda sem ajustar o modelo.
+considerando o tamanho do município, assimetria de `prop_gestacao_mult`, mapa/gráficos), ainda sem ajustar o modelo.
+
+
+---
+
+## 9. Conferência da base com o TABNET (validação externa)
+
+**Objetivo:** mostrar que o que o script produziu a partir dos microdados é idêntico ao que o sistema oficial
+tabula. É a melhor resposta à pergunta "como você sabe que sua base está certa?".
+
+**O que comparar (por município):** total de nascidos vivos, nascidos com baixo peso, nascidos com peso ≥ 2.500 g e
+peso ignorado. **Não** compare `consprenat` (D10).
+
+**Passo a passo no TABNET** (os nomes dos menus podem variar um pouco):
+1. `datasus.saude.gov.br` → *Informações de Saúde (TABNET)* → *Estatísticas Vitais* → *Nascidos vivos*.
+2. Escolha a abrangência **Santa Catarina** (com município) e o ano **2026**.
+3. **Linha:** *Município* (residência da mãe, conforme as orientações). **Coluna:** *Peso ao nascer* (faixas).
+   **Conteúdo:** *Nascim p/resid.mãe* (nascimentos por residência da mãe).
+4. Marque **"Exibir linhas zeradas"**.
+5. Clique em *Mostra* e use **"Copia como .CSV"** (ou botão equivalente). Salve em
+   `data/raw/tabnet_nv_sc2026_peso.csv`.
+6. Anote a **data/versão** que o TABNET exibe para 2026 e rode `scripts/02_conferencia_tabnet.R`.
+
+**Ressalva importante (a mais provável causa de diferenças):** o TABNET pode estar em uma prévia **mais nova**
+que a sua (extração de 01/09/2026). Se for o caso, o TABNET terá **mais nascimentos**, concentrados em agosto
+(a fase incompleta). Se aparecerem diferenças, elas devem ser **todas ≥ 0 a favor do TABNET**; se houver
+diferenças em ambos os sentidos, ou em municípios com poucos nascimentos sem relação com agosto, investigue.
+Se o TABNET permitir restringir por mês, compare jan–jul, que já estava completo na sua extração.
+
+**O que é "traço" no TABNET:** o CSV usa `-` para célula zero. O script converte `-` em 0 **apenas após** conferir
+a nota de rodapé do próprio CSV (é a "consulta à documentação" que as orientações pedem; imprimimos as notas).
+
+**Critério de aceitação:** diferença zero em todos os municípios (mesma prévia) ou diferenças explicáveis pela
+prévia (TABNET ≥ base). Registre o resultado aqui: **[PREENCHER]**.
