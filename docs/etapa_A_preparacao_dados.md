@@ -403,7 +403,7 @@ eventos" no ajuste municipal.
 - [x] Bloco de agosto rodado; decisão: manter jan–ago (D3b).
 - [x] `SEMADUM.CNV` verificado (D10).
 - [x] Nascimentos de mães de SC ocorridos fora de SC conferidos: 653 (D2); cauda de `consprenat` sem problemas.
-- [ ] Conferir a base com o TABNET (Seção 9, script `02_conferencia_tabnet.R`).
+- [x] Base conferida com o TABNET: 0 diferenças em 295 municípios (Seção 9, `02_conferencia_tabnet.R`).
 - [ ] `commit` com script, este documento, `output/tabelas/` e `.gitignore` (sem `data/raw`).
 
 **Próxima etapa (B):** análise exploratória (distribuição de `taxa_baixo_peso`, relação com cada preditor
@@ -436,8 +436,34 @@ que a sua (extração de 01/09/2026). Se for o caso, o TABNET terá **mais nasci
 diferenças em ambos os sentidos, ou em municípios com poucos nascimentos sem relação com agosto, investigue.
 Se o TABNET permitir restringir por mês, compare jan–jul, que já estava completo na sua extração.
 
-**O que é "traço" no TABNET:** o CSV usa `-` para célula zero. O script converte `-` em 0 **apenas após** conferir
-a nota de rodapé do próprio CSV (é a "consulta à documentação" que as orientações pedem; imprimimos as notas).
+**O que é "traço" no TABNET:** o CSV pode usar `-` para célula zero. O CSV desta extração **não trouxe notas de
+rodapé** (o script de leitura não encontrou nenhuma), então a legenda do traço fica apenas na tela do TABNET.
+Como as orientações pedem não converter traço em zero sem consultar a documentação, a justificativa aqui é dupla:
+(1) a legenda do TABNET na página e (2) **a validação empírica**: como os totais por município e por faixa de
+peso batem *exatamente* com os microdados (abaixo), a conversão de `-` e células vazias em zero está comprovada.
 
 **Critério de aceitação:** diferença zero em todos os municípios (mesma prévia) ou diferenças explicáveis pela
-prévia (TABNET ≥ base). Registre o resultado aqui: **[PREENCHER]**.
+prévia (TABNET ≥ base).
+
+### Resultado da conferência (executada)
+
+| Item | Base (microdados) | TABNET |
+|---|---|---|
+| Municípios | 295 | 295 (todos casaram; nenhum código fora da base) |
+| Total de nascidos vivos | 64.472 | 64.472 |
+| Baixo peso (< 2.500 g) | 5.302 | 5.302 |
+| Peso ≥ 2.500 g | 59.167 | 59.167 |
+| Peso ignorado | 3 | 3 |
+| Taxa de baixo peso (sobre peso conhecido) | 8,2241% | 8,2241% |
+| **Municípios com qualquer diferença** | — | **0** |
+
+* Faixas do TABNET classificadas: baixo peso = *Menos de 500 g*, *500–999 g*, *1000–1499 g*, *1500–2499 g*;
+  demais = *2500–2999 g*, *3000–3999 g*, *4000 g e mais*; *Ignorado* separado.
+* O TABNET estava **na mesma prévia** (2ª prévia, extração 01/09/2026) que o arquivo baixado: não houve nenhuma
+  diferença nem a favor do TABNET.
+* **Conclusão:** a base municipal construída a partir dos microdados **reproduz exatamente** a tabulação oficial
+  (resposta, denominador e peso ignorado). A validação cobre a **resposta e o denominador**; os preditores
+  (proporções de adolescentes etc.) não estão nessa tabulação e foram verificados por consistência interna
+  (domínios válidos, ignorados < 0,3%, nenhuma proporção fora de [0,1]).
+* **Resposta para a banca:** *"Conferi os 295 municípios contra a tabulação oficial do TABNET na mesma prévia: totais,
+  baixo peso, demais e ignorados coincidem exatamente."*

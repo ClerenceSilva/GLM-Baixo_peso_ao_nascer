@@ -34,9 +34,10 @@ linhas <- iconv(readLines(arq_tabnet, warn = FALSE), from = "latin1", to = "UTF-
 i_cab <- grep('^"?Munic', linhas)[1]
 stopifnot(!is.na(i_cab))
 
-## Notas de rodapé: LEIA (é a "documentação" sobre o significado do traço "-")
-notas <- linhas[grepl("^\"?(Fonte|Nota|Notas|-|\\.\\.\\.|\\*)", linhas) & seq_along(linhas) > i_cab]
-cat(notas, sep = "\n")
+## Notas de rodapé: o CSV do TABNET pode NÃO trazê-las (nesta extração não trouxe
+## nada). Mostramos as últimas linhas do arquivo para conferir. A legenda do
+## traço "-" fica na tela do TABNET (rodapé da página), não necessariamente no CSV.
+tail(linhas, 8)
 
 tab <- read.csv2(text = linhas[i_cab:length(linhas)],
                  check.names = FALSE, stringsAsFactors = FALSE, colClasses = "character")
@@ -56,8 +57,15 @@ nrow(tab)   # esperado: 295 (se "Exibir linhas zeradas" estava marcado)
 ################################################################################
 
 ## Atenção às orientações: não converter traço em zero "no escuro". Confira, nas
-## notas impressas acima, que "-" é "dado numérico igual a zero". Só então:
+## legenda do TABNET (tela da página) que "-" é "dado numérico igual a zero". Se o
+## CSV não trouxer notas, a VALIDAÇÃO EMPÍRICA é o próprio teste de totais abaixo:
+## se "-" não significasse zero, os totais por município não bateriam com os meus.
+## Só então:
 cols_num <- setdiff(names(tab), c("municipio", "cod6"))
+
+## Quantas células são "-" ou vazias? (se for 0, não há o que converter)
+celulas <- unlist(tab[cols_num])
+c(tracos = sum(trimws(celulas) == "-"), vazias = sum(trimws(celulas) == ""))
 para_n <- function(x) {
     x <- trimws(x)
     x[x %in% c("-", "")] <- "0"
