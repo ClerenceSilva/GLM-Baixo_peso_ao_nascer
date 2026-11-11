@@ -1,0 +1,6 @@
+"","prop_adolescente","prop_esc_baixa","prop_prenatal_insuf","prop_gestacao_mult","prop_mae_35mais"
+"prop_adolescente",1,0.2,0.11,0.11,-0.23
+"prop_esc_baixa",0.2,1,0.08,0.01,0.04
+"prop_prenatal_insuf",0.11,0.08,1,0.03,-0.06
+"prop_gestacao_mult",0.11,0.01,0.03,1,0
+"prop_mae_35mais",-0.23,0.04,-0.06,0,1

@@ -83,7 +83,7 @@ tab_classe <- b %>%
     n_municipios     = n(),
     nascimentos      = sum(n_nascidos),
     pct_nascimentos  = round(100 * sum(n_nascidos) / sum(b$n_nascidos), 1),
-    baixo_peso       = sum(baixo_peso),
+    casos_baixo_peso = sum(baixo_peso),   # nome novo: não sobrescrever a coluna de entrada
     taxa_agregada    = round(100 * sum(baixo_peso) / sum(n_nascidos), 2),
     taxa_min         = round(100 * min(taxa), 1),
     taxa_max         = round(100 * max(taxa), 1),

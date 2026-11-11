@@ -1,0 +1,4 @@
+"criterio","n_municipios","pct"
+"n_i * p0 < 3",94,31.9
+"n_i * p0 < 5",138,46.8
+"n_i * (1-p0) < 3",0,0

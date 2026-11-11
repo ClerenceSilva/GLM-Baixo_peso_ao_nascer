@@ -1,0 +1,6 @@
+"preditor","media","mediana","dp","minimo","maximo","n_zeros","pct_zeros","assimetria"
+"prop_adolescente",0.0814,0.0769,0.0492,0,0.3333,27,9.2,1.0111
+"prop_esc_baixa",0.0596,0.0545,0.0474,0,0.3077,46,15.6,1.3328
+"prop_prenatal_insuf",0.0781,0.0761,0.051,0,0.2667,33,11.2,0.6399
+"prop_gestacao_mult",0.0241,0.0158,0.0326,0,0.1739,124,42,1.9973
+"prop_mae_35mais",0.1853,0.1816,0.0702,0,0.4706,3,1,0.3337

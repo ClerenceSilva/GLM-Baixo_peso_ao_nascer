@@ -1,0 +1,6 @@
+"preditor","cor_pearson_taxa_simples","cor_spearman_taxa","cor_pond_taxa","cor_pond_elogit","n_municipios","cor_pond_taxa_n30","cor_pond_elogit_n30"
+"prop_adolescente",0.034,0.082,0.158,0.153,215,0.22,0.206
+"prop_esc_baixa",0.248,0.088,0.102,0.059,215,0.048,0.026
+"prop_prenatal_insuf",0.086,0.116,0.083,0.082,215,0.091,0.09
+"prop_gestacao_mult",0.441,0.472,0.43,0.412,215,0.409,0.397
+"prop_mae_35mais",-0.135,-0.057,-0.107,-0.11,215,-0.129,-0.126

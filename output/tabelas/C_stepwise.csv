@@ -1,0 +1,7 @@
+"metodo","modelo"
+"back_AIC","adol10 + pre10 + mult10 + m35_10"
+"back_BIC","adol10 + mult10"
+"forw_AIC","mult10 + adol10 + pre10 + m35_10"
+"forw_BIC","mult10 + adol10"
+"both_AIC","mult10 + adol10 + pre10 + m35_10"
+"both_BIC","mult10 + adol10"
