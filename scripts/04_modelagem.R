@@ -210,7 +210,7 @@ write.csv(tab_step, "output/tabelas/C_stepwise.csv", row.names = FALSE, fileEnco
 
 
 ################################################################################
-### 6. DECISÃO DO AUTOR  >>>>>>  EDITAR AQUI  <<<<<<   (C11)
+### 6. DECISÃO DO AUTOR  >>>>>>  manter somente pre10 e mult10  <<<<<<   (C11)
 ################################################################################
 ## Regra escrita ANTES de olhar os resultados (ver docs, C11):
 ##  (i)  partir do melhor critério e escolher o mais simples com dAIC < 2;
