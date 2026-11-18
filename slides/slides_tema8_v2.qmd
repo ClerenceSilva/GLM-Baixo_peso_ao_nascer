@@ -1,0 +1,447 @@
+---
+title: "Baixo peso ao nascer em Santa Catarina"
+subtitle: "Probabilidade de baixo peso entre municípios (SINASC, 2026) — regressão binomial agrupada com superdispersão"
+author:
+  - "Vinicius de Lima Santana"
+  - "João Victor Pietchaki Goncalves"
+  - "Leonardo Eizo Sakai"
+institute: "CE314 — Modelos Lineares Generalizados · UFPR"
+date: "2026-11-30"
+date-format: "DD/MM/YYYY"
+lang: pt-BR
+
+format:
+  beamer:
+    aspectratio: 169
+    theme: "Madrid"
+    fonttheme: "professionalfonts"
+    slide-level: 2
+    keep-tex: false
+    incremental: false
+    toc: false
+    section-titles: false
+    header-includes: |
+      % Paleta "Saúde / Biostatística" (template, opção 8)
+      \definecolor{Primary}{HTML}{155E63}
+      \definecolor{Secondary}{HTML}{287C7E}
+      \definecolor{Accent}{HTML}{5CB8B2}
+      \definecolor{Light}{HTML}{EDF7F6}
+      \definecolor{Dark}{HTML}{203333}
+      \definecolor{Success}{HTML}{5A9E6F}
+      \definecolor{Warning}{HTML}{E08E5B}
+
+      \setkeys{Gin}{width=\textwidth,height=0.68\textheight,keepaspectratio}
+
+      \setbeamercolor{structure}{fg=Primary}
+      \setbeamercolor{palette primary}{bg=Primary, fg=white}
+      \setbeamercolor{palette secondary}{bg=Secondary, fg=white}
+      \setbeamercolor{palette tertiary}{bg=Primary!80!black, fg=white}
+      \setbeamercolor{titlelike}{parent=structure, fg=Primary}
+      \setbeamercolor{frametitle}{bg=Primary, fg=white}
+      \setbeamercolor{block title}{bg=Primary, fg=white}
+      \setbeamercolor{block body}{bg=Light, fg=Dark}
+      \setbeamercolor{item}{fg=Accent!80!black}
+      \setbeamercolor{subitem}{fg=Secondary}
+      \setbeamertemplate{navigation symbols}{}
+
+      % Rodapé enxuto: o padrão do Madrid cortava autor + instituição
+      \setbeamertemplate{footline}{%
+        \leavevmode%
+        \hbox{%
+          \begin{beamercolorbox}[wd=.30\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+            \usebeamerfont{author in head/foot}\insertshortauthor
+          \end{beamercolorbox}%
+          \begin{beamercolorbox}[wd=.45\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+            \usebeamerfont{title in head/foot}\insertshorttitle
+          \end{beamercolorbox}%
+          \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+            \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{1.5em}\insertframenumber{} / \inserttotalframenumber\hspace*{1ex}%
+          \end{beamercolorbox}}%
+        \vskip0pt%
+      }
+
+      \usepackage{etoolbox}
+      \AtBeginEnvironment{table}{\centering}
+      \AtBeginEnvironment{longtable}{\footnotesize}
+      \makeatletter
+      \renewcommand{\insertshortauthor}{V. L. Santana · J. V. P. Goncalves · L. E. Sakai}
+      \makeatother
+
+
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 7
+  fig-height: 4.2
+
+engine: knitr
+---
+
+```{r}
+#| include: false
+# Renderizar a partir da pasta slides/ (as figuras ficam em ../output/figuras).
+library(tidyverse)
+
+PRIMARY <- "#155E63"; SECONDARY <- "#287C7E"; ACCENT <- "#5CB8B2"
+LIGHT <- "#EDF7F6"; DARK <- "#203333"; SUCCESS <- "#5A9E6F"; WARNING <- "#E08E5B"
+
+FIG <- file.path("..", "output", "figuras")
+TAB <- file.path("..", "output", "tabelas")
+
+# Inclui uma figura pronta; se faltar, avisa no console (não derruba a renderização)
+fig <- function(arq) {
+  p <- file.path(FIG, arq)
+  if (!file.exists(p)) { message("FIGURA AUSENTE: ", p); return(invisible(NULL)) }
+  knitr::include_graphics(p)
+}
+
+tema <- theme_bw(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        strip.background = element_rect(fill = LIGHT))
+```
+
+# Problema e objetivo
+
+## Pergunta e contexto
+
+**Pergunta:** a probabilidade de baixo peso ao nascer difere entre os municípios de Santa Catarina? Quais características municipais estão associadas a essas diferenças?
+
+- **Baixo peso:** nascido vivo com menos de 2.500 g.
+- **Unidade de análise:** município de residência da mãe (295 municípios).
+- **Resposta:** par (nº com baixo peso, nº sem baixo peso) em cada município.
+- **Modelo:** regressão binomial agrupada; a variabilidade extra entre municípios exige ir além da binomial.
+
+> **Cuidado de leitura:** todos os resultados são **associações entre municípios**, sem causalidade e sem extrapolação para gestantes individuais.
+
+# Dados
+
+## Base de dados
+
+| Item | Valor |
+|:--------------------|:----------------------------|
+| Fonte | SINASC, microdados `DNSC2026.dbc` (DATASUS), SC |
+| Versão / extração | 2ª prévia, extração informada em **01/09/2026** |
+| Período efetivo | 01/01 a 31/08/2026 (agosto parcial) |
+| Nascidos vivos no arquivo | 64.472 (todos de mães residentes em SC) |
+| Peso ignorado (excluído do denominador) | 3 (0,005%) |
+| **Base de análise** | **64.469 nascidos vivos, 5.302 com baixo peso (8,22%)** |
+| Municípios | 295, todos com nascimentos (mínimo 8) |
+
+- **Validação externa:** tabulação do TABNET (mesma prévia) $\Rightarrow$ **0 diferenças** nos 295 municípios.
+- Agosto mantido: a taxa de agosto é igual à de jan–jul (8,22%); sensibilidade sem agosto na modelagem.
+
+## Resposta e preditores
+
+**Sucessos:** nascidos com peso < 2.500 g. **Insucessos:** peso $\ge$ 2.500 g. Resposta: `cbind(baixo peso, demais)`.
+
+| Nome no modelo | Preditor (proporção municipal) | Definição | Média entre municípios |
+|:--|:--|:--|--:|
+| `pre10` | Pré-natal insuficiente | mães com < 6 consultas | 7,8% |
+| `mult10` | Gestação múltipla | gravidez dupla ou mais | 2,4% |
+| `adol10` | Mães adolescentes | 10–19 anos | 8,1% |
+| `esc10` | Escolaridade baixa | < 8 anos de estudo | 6,0% |
+| `m35_10` | Mães com 35 anos ou mais | idade $\ge$ 35 | 18,5% |
+
+- Cinco candidatos, todos contínuos e em **unidades de 10 p.p.** (ex.: `pre10` = proporção $\times$ 10). Correlação máxima entre eles: 0,19.
+- **Fora de propósito:** semanas de gestação, Apgar, sexo, malformação, tipo de parto (mediadores ou quase a própria resposta).
+
+# Análise exploratória
+
+## O ruído binomial domina nos municípios pequenos
+
+:::: {.columns}
+::: {.column width="62%"}
+```{r}
+#| out-width: "100%"
+fig("B_funil.png")
+```
+:::
+::: {.column width="38%"}
+- Municípios pequenos oscilam muito por acaso; **24** ficam fora da faixa de 95% (esperado $\le$ 15) e **7 dos 28 maiores**.
+- **Há diferença real entre municípios**: $\hat\phi$ do modelo nulo = **1,55** (superdispersão).
+:::
+::::
+
+## Relação com a resposta: linear no logito
+
+:::: {.columns}
+::: {.column width="64%"}
+```{r}
+#| out-width: "100%"
+fig("B_preditor_x_logito_n30.png")
+```
+:::
+::: {.column width="36%"}
+- Municípios com $n \ge 30$ (215). Curvaturas aparentes vinham dos pequenos: reta e loess praticamente coincidem.
+- **Gestação múltipla** tem a associação marginal mais nítida (correlação $\approx$ 0,4, estável).
+:::
+::::
+
+# Modelagem
+
+## Modelo: beta-binomial com ligação logito
+
+$$
+Y_i \mid \pi_i \sim \text{Bin}(n_i,\pi_i), \quad \pi_i \sim \text{Beta (média } \mu_i) \;\Rightarrow\; Y_i \sim \text{Beta-binomial}(n_i,\mu_i,\rho)
+$$
+
+$$
+\text{logit}(\mu_i) = \beta_0 + \beta_1\,\text{pre10}_i + \beta_2\,\text{mult10}_i,
+\qquad
+\text{Var}(Y_i) = n_i\mu_i(1-\mu_i)\,[\,1 + (n_i-1)\rho\,]
+$$
+
+- $\mu_i$: probabilidade de baixo peso do município $i$; **logito**: razão de chances interpretável (probito e cloglog empatam, $\Delta$AIC < 2).
+- $\rho$: heterogeneidade entre municípios além do acaso; o fator de variância **cresce com $n_i$**.
+- Convergência sem separação (probabilidades ajustadas entre 0,056 e 0,258).
+- **Não** usei o $\chi^2$ da deviance: em 31,9% dos municípios o esperado de casos é < 3.
+
+## Por que beta-binomial e não binomial ou quase-binomial
+
+| Classe de $n_i$ | < 30 | 30–99 | 100–499 | $\ge$ 500 |
+|:--|--:|--:|--:|--:|
+| $\phi$ de Pearson observado (binomial) | 1,07 | 1,13 | 1,23 | **2,51** |
+| Fator previsto $1+(n-1)\rho$ | 1,02 | 1,06 | 1,22 | **2,44** |
+
+- A superdispersão **não é constante**: está nos municípios grandes. O quase-binomial supõe $\phi$ constante (1,28) e erra nas duas pontas.
+- Teste da razão de verossimilhanças contra a binomial: $\chi^2 = 19{,}6$, $p \approx 5\times10^{-6}$; AIC 1405 $\to$ **1387**.
+- Preço: o beta-binomial **pesa menos os municípios grandes**, o que muda o coeficiente de pré-natal (ver robustez).
+
+## Seleção de variáveis e forma funcional
+
+- 32 modelos comparados por AIC e BIC **dentro do beta-binomial** (família escolhida antes de selecionar); 8 ficam a menos de 2 de AIC do melhor.
+- **Só `pre10` e `mult10` aparecem em todos** os modelos competitivos; essa dupla tem o **melhor BIC** (e fica a 1,45 do melhor AIC).
+- Fora: `esc10` ($p > 0{,}6$ com $n \ge 30$), `m35_10` ($p = 0{,}29$), `adol10` ($p = 0{,}058$; usada como robustez).
+- **Linear no logito:** splines (3 gl) $p = 0{,}51$; teste de $\hat\eta^2$ $p = 0{,}14$ (resíduos parciais no apêndice).
+
+> **Limitação assumida:** seleção e inferência nos mesmos dados (p-valores um pouco otimistas).
+
+# Diagnóstico
+
+## O beta-binomial descreve a variabilidade em todos os tamanhos
+
+:::: {.columns}
+::: {.column width="52%"}
+```{r}
+#| out-width: "100%"
+fig("D_envelope_bb.png")
+```
+:::
+::: {.column width="48%"}
+```{=latex}
+\begin{tabular}{lrr}
+\hline
+Classe de $n_i$ & $\phi$ binomial & $\phi$ beta-bin. \\
+\hline
+$< 30$ & 1,07 & 1,06 \\
+30--99 & 1,13 & 1,05 \\
+100--499 & 1,23 & 0,96 \\
+$\ge 500$ & \textbf{2,51} & \textbf{1,15} \\
+\hline
+\end{tabular}
+```
+
+- Resíduos quantílicos: DP **0,997**.
+- Envelope simulado (99 reajustes): **0 pontos fora**.
+- Sem correlação dos resíduos com preditores, $\log n$ e $\hat\eta$ ($|r| < 0{,}014$).
+:::
+::::
+
+## Influência, multicolinearidade e dependência espacial
+
+- **Colinearidade:** VIF = 1,003. **Influência** (reajuste sem cada município; **nenhum excluído**): maior |DFBETAS| = 0,52 (Morro Grande) e 0,49 (Florianópolis); nenhum chega a 1.
+- Reajustes sem os mais influentes, sem os 4 minúsculos do funil, sem os 28 maiores, sem $n<30$ e sem resíduos > 2: OR de gestação múltipla **2,14–2,35** e de pré-natal **1,13–1,24**.
+- **Dependência espacial fraca:** Moran dos resíduos $I = 0{,}077$ ($p = 0{,}015$); absorvida por região ou superfície, sem mudar as conclusões.
+
+| Modelo | OR gest. múltipla | OR pré-natal | Moran (p) |
+|:---------------------|-------------:|-----------:|----------------------:|
+| Final (sem controle geográfico) | 2,24 | 1,16 | 0,077 (0,015) |
+| + região intermediária | 2,15 | 1,19 | 0,020 (0,25) |
+| + superfície 2ª ordem | 2,14 | 1,21 | 0,038 (0,13) |
+
+# Resultados
+
+## Estimativas do modelo final
+
+| Termo | $\hat\beta$ (EP) | OR +10 p.p. (IC 95%) | OR +1 DP (IC 95%) | $p$ (TRV) |
+|:---------------|:------------|:---------------|:---------------|----------:|
+| Gestação múltipla | 0,805 (0,091) | **2,24** (1,87–2,68) | **1,30** (1,23–1,38) | $1{,}3\times10^{-16}$ |
+| Pré-natal insuficiente | 0,151 (0,053) | **1,16** (1,05–1,29) | **1,08** (1,03–1,14) | 0,0038 |
+
+- 1 DP entre municípios $\approx$ 3,3 p.p. (gestação múltipla) e 5,1 p.p. (pré-natal).
+- Modelo final contra o nulo: $\chi^2 = 73{,}8$ (2 gl), $p \approx 10^{-16}$; AIC 1457 $\to$ 1387.
+- IC de Wald e de verossimilhança perfilada coincidem.
+- $\hat\rho$: 0,00191 (nulo) $\to$ **0,00103** (IC 0,00046–0,00229): os preditores reduzem **cerca de metade** da heterogeneidade extra.
+
+## Probabilidade de baixo peso estimada pelo modelo
+
+:::: {.columns}
+::: {.column width="65%"}
+```{r}
+#| out-width: "100%"
+#| fig-width: 6.2
+#| fig-height: 3.4
+cv <- read.csv(file.path(TAB, "E_curvas_prob.csv"))
+rot <- c(mult10 = "Gestações múltiplas\n(% dos nascidos vivos)",
+         pre10  = "Pré-natal insuficiente\n(% dos nascidos vivos)")
+cv$variavel <- factor(cv$variavel, levels = names(rot), labels = rot)
+vl <- data.frame(variavel = factor(rot[1], levels = rot), x = 10)
+
+ggplot(cv, aes(x_pct, prob)) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), fill = SECONDARY, alpha = 0.25) +
+  geom_line(colour = PRIMARY, linewidth = 1.1) +
+  geom_vline(data = vl, aes(xintercept = x), linetype = 2, colour = WARNING) +
+  facet_wrap(~ variavel, scales = "free_x") +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                     breaks = seq(0.05, 0.25, 0.05)) +
+  coord_cartesian(ylim = c(0.05, 0.28)) +
+  labs(x = NULL, y = "Probabilidade de baixo peso (IC 95%)") + tema
+```
+:::
+::: {.column width="35%"}
+
+- Faixa: IC 95% da probabilidade **média** (outro preditor na média). Mesmo eixo vertical nos dois painéis.
+
+- Tracejado: acima de 10 p.p. há só **10 municípios** (cauda incerta).
+
+- Gestação múltipla mexe bem mais na probabilidade do que o pré-natal.
+:::
+::::
+
+## O que isso significa em pontos percentuais
+
+| Contraste (outro preditor na média) | Diferença (p.p.) | IC 95% | Razão de prob. |
+|:-----------------------------|----------:|:--------|---------:|
+| Gest. múltipla: média $\to$ +1 DP (2,4% $\to$ 5,7%) | **+2,2** | 1,7–2,7 | 1,27 |
+| Gest. múltipla: média $\to$ +10 p.p. (região esparsa) | +8,4 | 6,1–11,0 | 2,03 |
+| Pré-natal: média $\to$ +1 DP (7,8% $\to$ 12,9%) | **+0,6** | 0,2–1,0 | 1,07 |
+| Pré-natal: média $\to$ +10 p.p. | +1,2 | 0,4–2,1 | 1,15 |
+
+- Partindo de uma probabilidade média de **8,2%**.
+- **Razão de chances $\ne$ razão de probabilidades:** OR 2,24 por +10 p.p. vira razão de probabilidades de 2,03, pois a base (8%) não é desprezível.
+- A comparação por +1 DP é a mais defensável: +10 p.p. de gestação múltipla leva a 12,4%, onde há poucos municípios.
+
+## Robustez
+
+| Cenário (beta-binomial, salvo indicação) | OR gest. múltipla | OR pré-natal |
+|:--|:--|:--|
+| Principal | 2,24 | 1,16 ($p$ = 0,004) |
+| Quase-binomial | 2,22 | 1,09 ($p$ = 0,066) |
+| Sem agosto (jan–jul) | 2,30 | 1,16 |
+| Só $n \ge 30$ (215 municípios) | 2,35 | 1,17 |
+| Exclusões de atípicos (5 cenários distintos) | 2,14–2,35 | 1,13–1,24 |
+| Controle geográfico (região, lon/lat, superfície) | 2,14–2,17 | 1,16–1,21 |
+| Pré-natal definido com < 7 consultas | 2,21 | 1,07 ($p$ = 0,050) |
+
+- **Gestação múltipla:** estável em todos os cenários.
+- **Pré-natal:** resiste a atípicos e à geografia, mas **depende da família e da definição**; por isso é uma associação **moderada**.
+
+# Limitações
+
+## O que limita as conclusões
+
+- **Desenho ecológico:** associações entre municípios; não valem para gestantes individuais nem indicam causa.
+- **Dados:** 2ª prévia, agosto parcial; municípios pequenos com proporções ruidosas (possível atenuação).
+- **Modelagem:** seleção e inferência nos mesmos dados; pré-natal sensível à família e à definição.
+- **Espaço:** dependência residual fraca; erros-padrão possivelmente um pouco otimistas.
+- **Ajuste:** o beta-binomial pesa menos os grandes (esperado $\approx$ 3,8% acima do observado nos 28 maiores; 1,7% no total); cauda de gestação múltipla esparsa.
+- **Sem covariáveis socioeconômicas** de contexto (renda, acesso a serviços).
+
+# Conclusão
+
+## Principais conclusões
+
+1. **Gestação múltipla:** associação forte, positiva e estável. A chance de baixo peso é $\approx$ 2,2 vezes maior onde essa proporção é 10 p.p. maior (1,3 por +1 DP; $\approx$ +2,2 p.p. de probabilidade).
+2. **Pré-natal insuficiente:** associação positiva **moderada** (OR 1,16 por 10 p.p.; $\approx$ +0,6 p.p. por +1 DP), sensível à família e à definição.
+3. **Heterogeneidade entre municípios** existe além do acaso e se concentra nos municípios grandes; os dois preditores explicam cerca de metade e boa parte do resto é geográfica.
+
+> **Em uma frase:** municípios com mais gestações múltiplas, e em menor grau mais pré-natal insuficiente, têm probabilidade maior de baixo peso, e a superdispersão com o tamanho exige o modelo beta-binomial.
+
+## Obrigado!
+
+**Perguntas?**
+
+# Apêndice {.appendix}
+
+## A1. Taxa de baixo peso por faixas dos preditores (só descritivo)
+
+```{r}
+#| out-width: "85%"
+#| fig-align: center
+fig("B_preditor_x_taxa_faixas.png")
+```
+
+Faixas apenas para visualização; o modelo usa os preditores contínuos.
+
+## A2. Calibração descritiva
+
+```{r}
+#| out-width: "42%"
+#| fig-align: center
+fig("E_calibracao.png")
+```
+
+Sem desvio sistemático por decil de $\hat\pi$; esperado total 5.390 contra 5.302 observados. Não é teste de ajuste.
+
+## A3. Robustez: famílias e subconjuntos (razão de chances por +10 p.p.)
+
+```{r}
+#| fig-width: 7
+#| fig-height: 3.6
+#| out-width: "85%"
+#| fig-align: center
+rb <- read.csv(file.path(TAB, "E_robustez_familias.csv")) |>
+  filter(termo %in% c("pre10", "mult10"), familia != "Binomial (EP sem correção)") |>
+  mutate(termo = recode(termo, mult10 = "Gestação múltipla", pre10 = "Pré-natal insuficiente"),
+         familia = recode(familia, `Beta-binomial` = "beta-bin.", `Quasi-binomial` = "quasi"),
+         cenario = str_replace(cenario, "Principal.*", "Principal") |>
+                   str_replace("Apenas n >= 30.*", "Só n >= 30"),
+         rot = paste(cenario, familia, sep = " | "))
+ggplot(rb, aes(OR, rot, xmin = lo, xmax = hi)) +
+  geom_pointrange(colour = PRIMARY, size = 0.5) +
+  geom_vline(xintercept = 1, linetype = 2, colour = WARNING) +
+  scale_x_log10() + facet_wrap(~ termo, scales = "free_x") +
+  labs(x = "Razão de chances (IC 95% de Wald, escala log)", y = NULL) + tema
+```
+
+## A4. Sensibilidade espacial (D12)
+
+```{r}
+#| out-width: "88%"
+#| fig-align: center
+fig("D12_forest_espacial.png")
+```
+
+Modelo com efeito aleatório espacial não convergiu e foi descartado; região e superfície reduzem $\rho$ de 0,00103 para 0,00033 e 0,00021.
+
+## A5. Influência (DFBETAS) e resíduos
+
+```{r}
+#| out-width: "70%"
+#| fig-align: center
+fig("D_influencia.png")
+```
+
+## A6. Resíduos parciais (forma funcional)
+
+```{r}
+#| out-width: "85%"
+#| fig-align: center
+fig("D_residuos_parciais.png")
+```
+
+## A7. Resíduos quantílicos × tamanho: binomial e beta-binomial
+
+```{r}
+#| out-width: "90%"
+#| fig-align: center
+fig("D_residuos_x_n_bin_vs_bb.png")
+```
+
+## A8. Correlações e conferência de dados
+
+- Correlação ponderada com a resposta (todos os municípios): gestação múltipla 0,41; adolescentes 0,15; pré-natal 0,08; mães 35+ $-0{,}11$; escolaridade baixa 0,06.
+- Adolescentes e escolaridade são sensíveis aos municípios pequenos; gestação múltipla é estável.
+- Peso mínimo de 122 g: provável erro de digitação, sem efeito (qualquer valor < 2.500 g é baixo peso); não excluído.
+- Município sem nascimento: nenhum (295 com denominador > 0).
