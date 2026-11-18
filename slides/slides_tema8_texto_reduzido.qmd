@@ -1,9 +1,9 @@
 ---
 title: "Baixo peso ao nascer em Santa Catarina"
-subtitle: "SINASC 2026 · Regressão beta-binomial para dados municipais agrupados"
+subtitle: "Probabilidade de baixo peso entre municípios (SINASC, 2026)"
 author:
   - "Vinicius de Lima Santana"
-  - "João Victor Pietchaki Goncalves"
+  - "João Victor Pietchaki Gonçalves"
   - "Leonardo Eizo Sakai"
 institute: "CE314 — Modelos Lineares Generalizados · UFPR"
 date: "2026-11-30"
@@ -64,7 +64,7 @@ format:
       \AtBeginEnvironment{table}{\centering}
       \AtBeginEnvironment{longtable}{\footnotesize}
       \makeatletter
-      \renewcommand{\insertshortauthor}{V. L. Santana · J. V. P. Goncalves · L. E. Sakai}
+      \renewcommand{\insertshortauthor}{V. L. Santana · J. V. P. Gonçalves · L. E. Sakai}
       \makeatother
 
 execute:
