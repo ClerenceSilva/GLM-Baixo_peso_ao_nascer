@@ -1,0 +1,7 @@
+"modelo","residuo","I_contig","p_contig","I_5viz","p_5viz"
+"M0 final","marginal (parte fixa)",0.0770320423470276,0.0152,0.0680177165730668,0.0238
+"M1 + região intermediária","marginal (parte fixa)",0.0202509637416605,0.2495,0.0132067674030759,0.3002
+"M2 + lon/lat","marginal (parte fixa)",0.0713582691694463,0.0233,0.0650839730693365,0.0294
+"M3 + superfície 2ª ordem","marginal (parte fixa)",0.0375086387771875,0.1315,0.0356874491308444,0.1319
+"M4 + efeito espacial","marginal (parte fixa)",0.0770326360316493,0.0152,0.0680182149721868,0.0238
+"M4 + efeito espacial","condicional (com efeito espacial)",0.0770316085417744,0.0152,0.0680174342627388,0.0238

@@ -40,7 +40,7 @@ for (pasta in c("data/processed", "output/tabelas", "output/figuras")) {
 }
 options(scipen = 999)
 
-SEMENTE       <- 2026   # reprodutibilidade
+SEMENTE       <- 67     # reprodutibilidade
 N_SIM_ENV     <- 99     # simulações do envelope (convenção do pacote hnp)
 N_SIM_DHARMA  <- 1000   # simulações do DHARMa
 N_SIM_MORAN   <- 9999   # permutações do teste de Moran
