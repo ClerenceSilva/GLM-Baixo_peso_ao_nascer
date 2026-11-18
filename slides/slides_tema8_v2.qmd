@@ -210,7 +210,7 @@ $$
 
 ## Seleção de variáveis e forma funcional
 
-- 32 modelos comparados por AIC e BIC **dentro do beta-binomial** (família escolhida antes de selecionar); 8 ficam a menos de 2 de AIC do melhor.
+- 32 modelos comparados por AIC e BIC **dentro do beta-binomial**; 8 ficam a menos de 2 de AIC do melhor.
 - **Só `pre10` e `mult10` aparecem em todos** os modelos competitivos; essa dupla tem o **melhor BIC** (e fica a 1,45 do melhor AIC).
 - Fora: `esc10` ($p > 0{,}6$ com $n \ge 30$), `m35_10` ($p = 0{,}29$), `adol10` ($p = 0{,}058$; usada como robustez).
 - **Linear no logito:** splines (3 gl) $p = 0{,}51$; teste de $\hat\eta^2$ $p = 0{,}14$ (resíduos parciais no apêndice).
