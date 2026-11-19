@@ -1,6 +1,6 @@
 # Etapa F — Fechamento (Tema 8, baixo peso ao nascer em SC, SINASC 2026)
 
-Arquivos: `slides/slides_tema8.qmd` (slides) e este documento · Status: **slides e roteiro entregues; falta renderizar, conferir e ensaiar** (itens `[PREENCHER]` na Seção 7).
+Arquivos: `slides/slides_tema8_v2.qmd` (slides finais, 26 páginas em PDF) e este documento · Status: **CONCLUÍDA em 18/11/2026**. Slides renderizados e conferidos; faltam apenas enviar o PDF (até 20/11) e ensaiar.
 
 ---
 
@@ -23,7 +23,7 @@ Formato: **o que · alternativas · por que · risco · frase para a banca**.
 * **Risco:** falta de figura quebra o layout. O script avisa no console (`FIGURA AUSENTE`) sem derrubar a renderização.
 * **Frase:** *"Os slides são gerados por código a partir das tabelas e figuras do próprio trabalho."*
 
-### F2 — Estrutura: 17 slides principais + título + apêndice (A1–A6)
+### F2 — Estrutura: título + 17 slides principais + apêndice (A1–A8), 26 páginas
 Título · 1 pergunta · 2 dados · 3 resposta e preditores · 4 funil · 5 linearidade · 6 modelo · 7 por que beta-binomial · 8 seleção · 9 resíduos/envelope · 10 influência e espaço · 11 estimativas · 12 probabilidades · 13 pontos percentuais · 14 robustez · 15 limitações · 16 conclusões · 17 perguntas.
 * **Por que:** cobre todos os itens da avaliação (problema, dados, modelagem, diagnóstico, resultados, limitações) dentro de 10–20 slides.
 * **Risco:** denso para 13–14 minutos. Mitigação: slides 8 e 10 são os mais curtos na fala; cortar o slide 8 (seleção) se o ensaio passar de 15 min.
@@ -46,7 +46,21 @@ Título · 1 pergunta · 2 dados · 3 resposta e preditores · 4 funil · 5 line
 * **Risco:** divergir de um CSV. Mitigação: checklist da Seção 6 (conferir slides 11 e 13 contra `E_coeficientes.csv` e `E_efeitos_probabilidade.csv`).
 
 ### F7 — O que vai para o apêndice
-Taxas por faixa, calibração, forest de robustez por família, forest espacial, influência, correlações. São material de resposta ao debate, não da fala.
+Taxas por faixa, calibração, forest de robustez por família, forest espacial, influência, resíduos parciais, resíduos × tamanho, correlações e conferência de dados. São material de resposta ao debate, não da fala.
+
+### F8 — Revisão completa (v1 → v2) antes do envio
+* **O que:** conferência slide a slide contra as Etapas A–E, as orientações, o texto do Tema 8 e o material da disciplina.
+* **Correções de conteúdo:** (1) +3,6% → **+3,8%** nos 28 maiores (3.277 esperado × 3.158 observado; a base é o observado, como no +1,7% do total); (2) tabela de Moran só com região (0,020) e superfície (0,038), pois o Moran do modelo lon/lat não consta nas saídas; (3) forma funcional citada apenas com os testes do modelo final (splines p = 0,51; η̂² p = 0,14); (4) "+10 p.p. sai do suporte" → "região esparsa", com a linha +8,4 p.p. e razão 2,03 na tabela; (5) `pre10` e `mult10` definidos no slide de preditores.
+* **Ajustes de apresentação:** data do rodapé, rodapé enxuto, figuras em colunas, eixo y do gráfico de probabilidades com marcas a cada 5%, apêndice ampliado (A6 e A7).
+* **Observações do PDF final (26 páginas):** nenhum slide transbordou; os slides 4 e 15 ficam justos na parte de baixo, mas legíveis.
+* **Frase:** *"Revisei cada número dos slides contra as saídas das etapas; os que divergiam foram corrigidos."*
+
+### F9 — Equipe e divisão da fala
+* **Situação:** a análise foi conduzida por Clerence; em 18/11 entraram **João Victor P. Goncalves** e **Leonardo E. Sakai** para ajudar na apresentação, e os três constam nos slides. Antes o `plano_geral.md` registrava trabalho individual; foi reescrito (Seção 0) para servir também de guia aos colegas.
+* **Regra das orientações:** **todos os integrantes** apresentam e devem estar preparados para explicar as decisões da análise; o grupo debatedor pode perguntar a qualquer um.
+* **Divisão sugerida (13:45 no total):** bloco 1 (título a linearidade, ≈ 4:30); bloco 2 (modelo a influência e espaço, ≈ 4:15, o mais técnico); bloco 3 (estimativas a perguntas, ≈ 5:00). Responsáveis a preencher no `plano_geral.md`, Seção 0.6.
+* **Risco:** transições ruins e estouro de tempo. Mitigação: combinar a frase de passagem, quem controla o tempo e quem abre o apêndice; ensaiar os três juntos.
+* **Frase:** *"Cada integrante apresenta uma parte, mas todos respondem pelo trabalho inteiro."*
 
 ---
 
@@ -71,12 +85,12 @@ Taxas por faixa, calibração, forest de robustez por família, forest espacial,
 | 0 | Título | 0:30 | Tema, dados e a pergunta; aviso de que tudo é associação entre municípios. |
 | 1 | Pergunta e contexto | 0:45 | Baixo peso < 2.500 g; unidade = município; resposta = par sucessos/insucessos. |
 | 2 | Base de dados | 0:50 | SINASC 2ª prévia, 01/09/2026; jan–ago; 3 pesos ignorados; 64.469; validação TABNET sem diferenças. |
-| 3 | Resposta e preditores | 0:50 | Cinco candidatos em 10 p.p.; o que ficou de fora e por quê (mediadores). |
+| 3 | Resposta e preditores | 0:50 | Sucessos/insucessos; cinco candidatos em 10 p.p.; definir `pre10` e `mult10`; o que ficou de fora e por quê (mediadores). |
 | 4 | Funil | 0:55 | Município pequeno oscila por acaso; 24 fora (esperado ≤ 15), 7 de 28 grandes; φ nulo 1,55. |
 | 5 | Linearidade | 0:40 | Curvaturas eram dos pequenos; com n ≥ 30 reta e loess coincidem. |
 | 6 | Modelo | 0:50 | Beta-binomial, fórmula da variância, logito; por que não usei χ² da deviance. |
 | 7 | Por que beta-binomial | 0:55 | Tabela: superdispersão cresce com n e o fator 1+(n−1)ρ reproduz (2,51 vs 2,44); TRV p ≈ 5×10⁻⁶. |
-| 8 | Seleção | 0:40 | 32 modelos no beta-binomial; só dois em todos os competitivos; melhor BIC. |
+| 8 | Seleção e forma funcional | 0:40 | 32 modelos no beta-binomial; só dois em todos os competitivos; melhor BIC; splines p = 0,51 e η̂² p = 0,14. |
 | 9 | Resíduos e envelope | 0:55 | DP 0,997; nenhum ponto fora; φ por classe deixa de crescer (1,15 nos grandes). |
 | 10 | Influência e espaço | 0:55 | VIF 1; nenhum DFBETAS chega a 1; ninguém excluído; Moran fraco e absorvido por região. |
 | 11 | Estimativas | 0:55 | OR 2,24 e 1,16 por 10 p.p.; 1,30 e 1,08 por DP; ρ cai pela metade. |
@@ -89,6 +103,18 @@ Taxas por faixa, calibração, forest de robustez por família, forest espacial,
 | | **Total** | **13:45** | Margem de ~1 min dentro do limite de 15. |
 
 **Dicas de ensaio.** (i) Cronometrar três vezes; se passar de 14:30, cortar o slide 8 para uma frase e encurtar o 5. (ii) Nunca dizer "significativo" sem dizer em qual família. (iii) Nunca dizer "causa", "efeito" ou "risco" sem a palavra "associação" e "entre municípios". (iv) Na fala do slide 12, apontar a linha tracejada antes de comentar a cauda.
+
+### Divisão da fala entre os três (sugestão)
+
+| Bloco | Slides | Tempo | Responsável |
+|---|---|---|---|
+| 1. Abertura, dados e exploratória | 0 a 5 | 4:30 | `[PREENCHER]` |
+| 2. Modelo e diagnóstico | 6 a 10 | 4:15 | Clerence (sugestão) |
+| 3. Resultados e conclusão | 11 a 17 | 5:00 | `[PREENCHER]` |
+
+**Para os colegas que não fizeram a análise.** Leiam antes o `plano_geral.md` (Seção 0). Em cada slide, saibam dizer: (i) a mensagem em uma frase; (ii) os números em negrito; (iii) o que *não* dizer (causalidade, "significativo" sem modelo, OR como probabilidade). Se travarem em uma pergunta técnica, a resposta segura é a frase curta da Seção 5 e passar a palavra a Clerence.
+
+**Mapa de perguntas por tema.** Simples (qualquer um responde): 1, 11, 12, 14, 15, 16, 17, 21. Técnicas (preferencialmente Clerence; os outros dois sabem a resposta curta): 2, 3, 4, 7, 9, 10, 18, 19, 20, 22.
 
 ---
 
@@ -132,38 +158,43 @@ Taxas por faixa, calibração, forest de robustez por família, forest espacial,
 19. **Por que não incluiu prematuridade ou semanas de gestação?** São mediadores, quase a própria resposta; as orientações proíbem preditores que revelam a resposta.
 20. **Por que logito?** Canônica, dá razão de chances; probito e cloglog empatam (ΔAIC < 2), cauchit é pior (+15).
 21. **E o peso mínimo de 122 g?** Provável erro de digitação, inócuo (qualquer valor < 2.500 g é baixo peso); não excluído.
+22. **Você usou a beta-binomial como na aula (gamlss)?** O modelo é o mesmo; usei `glmmTMB`. A dispersão da aula (θ) e a minha (ρ = 1/(1+φ)) se relacionam por ρ = θ/(1+θ), com φ = 1/θ. Os coeficientes devem coincidir com os do `gamlss(..., family = BB)` (conferência opcional).
 
 ---
 
 ## 6. Checklist de entrega (até 20/11)
 
-- [ ] Rodar de novo, se necessário, `06_resultados.R` e confirmar que existem `E_curvas_prob.csv` e `E_robustez_familias.csv` em `output/tabelas/`.
-- [ ] Confirmar que existem em `output/figuras/`: `B_funil.png`, `B_preditor_x_logito_n30.png`, `D_envelope_bb.png`, `D_influencia.png`, `D12_forest_espacial.png`, `B_preditor_x_taxa_faixas.png`, `E_calibracao.png`.
-- [ ] `cd slides && quarto render slides_tema8.qmd` (PDF em `slides/`). Requer Quarto e TinyTeX/LaTeX.
-- [ ] Conferir no PDF: nº de slides principais (esperado 18 contando o título), nenhum slide transbordando, nenhuma figura em branco, caracteres especiais corretos.
-- [ ] Conferir os números dos slides 11 e 13 contra `E_coeficientes.csv` e `E_efeitos_probabilidade.csv`, e os do slide 14 contra os blocos C10/D7/D12.
-- [ ] Rótulos dos gráficos legíveis (a pendência cosmética do forest de robustez já está resolvida no apêndice A3).
-- [ ] Enviar o PDF para cetaconeli@gmail.com antes de **20/11/2026**.
-- [ ] Ensaiar 3 vezes cronometrando (13–14 min); simular 5 minutos de perguntas com a Seção 5.
-- [ ] Atualizar o `plano_geral.md` (status e registro de decisões) e o `README.md` (ordem dos scripts).
+- [x] Scripts de E e figuras/tabelas usados nos slides disponíveis em `output/`.
+- [x] Slides renderizados (`slides_tema8_v2.pdf`): 26 páginas, sem figura em branco, sem transbordamento.
+- [x] Números dos slides conferidos contra as etapas; correções da revisão aplicadas (F8).
+- [x] `plano_geral.md` e este documento atualizados.
+- [ ] Conferir o Moran do modelo lon/lat em `D12_moran_por_modelo.csv` (só necessário se quiser citá-lo).
+- [ ] Combinar a divisão da fala entre os três e preencher os responsáveis (`plano_geral.md`, Seção 0.6).
+- [ ] Os dois colegas leem a Seção 0 do `plano_geral.md` e esta Etapa F (Seções 2 a 5).
+- [ ] **Enviar o PDF para cetaconeli@gmail.com antes de 20/11/2026.**
+- [ ] Ensaio conjunto dos três, 3 vezes, cronometrando (13–14 min); simular 5 minutos de perguntas com a Seção 5, alternando quem responde.
+- [ ] Atualizar o `README.md` (ordem dos scripts `01` a `06` e `05b`).
 
 ---
 
-## 7. Pendências `[PREENCHER]` após renderizar
+## 7. Pendências após a renderização (resolvidas)
 
-* Nº total de páginas do PDF: `[PREENCHER]`
-* Slides que transbordaram ou precisaram de ajuste: `[PREENCHER]`
-* Tempo medido nos ensaios (min:s): `[PREENCHER]`
+* Nº total de páginas do PDF: **26** (título + 17 slides principais + 8 de apêndice).
+* Slides que transbordaram ou precisaram de ajuste: **nenhum**; slides 4 e 15 justos na base.
+* Tempo medido nos ensaios (min:s): `[PREENCHER]` (alvo 13–14 min).
 * Ordem de apresentação e grupo debatedor (definidos em 27/10): `[PREENCHER]`
 
 ---
 
-## 8. Registro de decisões (colar na Seção 8 do `plano_geral.md`)
+## 8. Registro de decisões (já colado na Seção 8 do `plano_geral.md`)
 
 | Data | Decisão | Quem |
 |---|---|---|
 | 14/11/2026 | Slides em QMD (Quarto/Beamer → PDF), paleta Saúde/Biostatística, 17 slides principais + título + apêndice | autor |
-| 14/11/2026 | Gráfico de probabilidades com mesmo eixo y; forest de robustez gerado no slide com rótulos corrigidos | autor |
+| 14/11/2026 | Gráfico de probabilidades com mesmo eixo y; forest de robustez gerado no slide | autor |
 | 14/11/2026 | Mensagem: gestação múltipla forte e estável; pré-natal moderada e sensível à família e à definição | autor |
-| 14/11/2026 | Roteiro de 13:45 min; cortar slide de seleção se o ensaio passar de 14:30 | autor |
-| `[PREENCHER]` | Etapa F concluída após renderização, conferência e ensaio | autor |
+| 14/11/2026 | Roteiro de 13:45 min; cortar o slide de seleção se o ensaio passar de 14:30 | autor |
+| 18/11/2026 | Revisão completa v1 → v2 (F8): +3,8% nos 28 maiores; Moran por modelo; forma funcional com testes do modelo final; "região esparsa"; nomes `pre10`/`mult10` definidos | autor |
+| 18/11/2026 | Apêndice ampliado para A1–A8; PDF final com 26 páginas | autor |
+| 18/11/2026 | Dois integrantes passam a ajudar na apresentação; `plano_geral.md` reescrito com Seção 0 (guia para os colegas); divisão da fala em três blocos (F9) | autor |
+| 18/11/2026 | **Etapa F concluída**; próximos passos: enviar PDF até 20/11 e ensaiar | autor |
