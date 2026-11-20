@@ -125,7 +125,7 @@ tema <- theme_bw(base_size = 12) +
 - **Resposta:** baixo peso / demais nascidos vivos.
 - **Modelo final:** regressão beta-binomial.
 
-> Associações municipais — não indicam causalidade nem representam relações individuais.
+> todos os resultados são **associações entre municípios**, sem causalidade e sem extrapolação para gestantes individuais.
 
 # Dados
 
@@ -250,7 +250,7 @@ fig("D_envelope_bb.png")
 
 - 1 DP: 3,3 p.p. (múltipla) e 5,1 p.p. (pré-natal).
 - Modelo vs. nulo: $\chi^2 = 73{,}8$ (2 gl); $p \approx 10^{-16}$.
-- $\hat\rho$: 0,00191 $\to$ **0,00103** — redução de cerca de 46%.
+- $\hat\rho$: 0,00191 $\to$ **0,00103** $\to$ redução de cerca de 46%.
 
 ## Probabilidade de baixo peso estimada pelo modelo
 
@@ -322,7 +322,7 @@ fig_gg(g, "E_curvas_prob", w = 8, ht = 3.5)
 2. **Pré-natal insuficiente:** associação moderada (OR 1,16), mais sensível às escolhas do modelo.
 3. **Heterogeneidade extra-binomial:** concentrada nos municípios maiores.
 
-> Municípios com maior proporção de gestações múltiplas — e, em menor grau, de pré-natal insuficiente — apresentam maior probabilidade estimada de baixo peso.
+> Municípios com maior proporção de gestações múltiplas (e, em menor grau, de pré-natal insuficiente) apresentam maior probabilidade estimada de baixo peso.
 
 ## Obrigado!
 
